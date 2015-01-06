@@ -80,8 +80,10 @@ public:
     int  controlVideo( int i_query, va_list args );
 
     /* Getters */
+#ifndef HAVE_MAEMO
     QSystemTrayIcon *getSysTray() { return sysTray; }
     QMenu *getSysTrayMenu() { return systrayMenu; }
+#endif
     int getControlsVisibilityStatus();
     bool isPlDocked() { return ( b_plDocked != false ); }
     bool isInterfaceFullScreen() { return b_interfaceFullScreen; }
@@ -123,8 +125,10 @@ private:
 
     /* */
     QSettings           *settings;
+#ifndef HAVE_MAEMO
     QSystemTrayIcon     *sysTray;
     QMenu               *systrayMenu;
+#endif
 
     QString              input_name;
     QVBoxLayout         *mainLayout;
@@ -179,9 +183,11 @@ public slots:
     void dockPlaylist( bool b_docked = true );
     void toggleMinimalView( bool );
     void togglePlaylist();
+#ifndef HAVE_MAEMO
     void toggleUpdateSystrayMenu();
     void showUpdateSystrayMenu();
     void hideUpdateSystrayMenu();
+#endif
     void toggleAdvancedButtons();
     void toggleInterfaceFullScreen();
     void toggleFSC();
@@ -199,7 +205,6 @@ public slots:
     void releaseVideoSlot( void );
 
     void emitBoss();
-    void emitRaise();
 
     void reloadPrefs();
 
@@ -212,9 +217,11 @@ private slots:
 #if 0
     void visual();
 #endif
+#ifndef HAVE_MAEMO
     void handleSystrayClick( QSystemTrayIcon::ActivationReason );
     void updateSystrayTooltipName( const QString& );
     void updateSystrayTooltipStatus( int );
+#endif
     void showCryptedLabel( bool );
 
     void handleKeyPress( QKeyEvent * );
@@ -239,7 +246,6 @@ private slots:
     void setVideoFullScreen( bool );
     void setVideoOnTop( bool );
     void setBoss();
-    void setRaise();
 
 signals:
     void askGetVideo( WId *p_id, int *pi_x, int *pi_y,
@@ -252,7 +258,6 @@ signals:
     void fullscreenInterfaceToggled( bool );
     void askToQuit();
     void askBoss();
-    void askRaise();
 
 };
 

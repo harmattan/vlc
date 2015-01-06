@@ -79,7 +79,6 @@ struct httpd_host_t
     /* address/port and socket for listening at connections */
     int         *fds;
     unsigned     nfd;
-    unsigned     port;
 
     vlc_thread_t thread;
     vlc_mutex_t lock;
@@ -140,6 +139,7 @@ enum
 {
     HTTPD_CLIENT_FILE,      /* default */
     HTTPD_CLIENT_STREAM,    /* regulary get data from cb */
+    HTTPD_CLIENT_BIDIR,     /* check for reading and get data from cb */
 };
 
 struct httpd_client_t
@@ -150,8 +150,9 @@ struct httpd_client_t
 
     int     fd;
 
-    bool    b_stream_mode;
-    uint8_t i_state;
+    int     i_mode;
+    int     i_state;
+    int     b_read_waiting; /* stop as soon as possible sending */
 
     mtime_t i_activity_date;
     mtime_t i_activity_timeout;
@@ -786,7 +787,7 @@ static int httpd_StreamCallBack( httpd_callback_sys_t *p_sys,
 
         if( query->i_type != HTTPD_MSG_HEAD )
         {
-            cl->b_stream_mode = true;
+            httpd_ClientModeStream( cl );
             vlc_mutex_lock( &stream->lock );
             /* Send the header */
             if( stream->i_header > 0 )
@@ -950,13 +951,21 @@ void httpd_StreamDelete( httpd_stream_t *stream )
  * Low level
  *****************************************************************************/
 static void* httpd_HostThread( void * );
-static httpd_host_t *httpd_HostCreate( vlc_object_t *, const char *,
-                                       const char *, vlc_tls_creds_t * );
+static httpd_host_t *httpd_HostCreate( vlc_object_t *, httpd_host_t **,
+                                       const char *, const char *,
+                                       vlc_tls_creds_t * );
+
+static struct httpd_t
+{
+    vlc_mutex_t  mutex;
+    httpd_host_t *http, *https, *rtsp;
+} httpd = { VLC_STATIC_MUTEX, NULL, NULL, NULL };
 
 /* create a new host */
 httpd_host_t *vlc_http_HostNew( vlc_object_t *p_this )
 {
-    return httpd_HostCreate( p_this, "http-host", "http-port", NULL );
+    return httpd_HostCreate( p_this, &httpd.http,
+                             "http-host", "http-port", NULL );
 }
 
 httpd_host_t *vlc_https_HostNew( vlc_object_t *obj )
@@ -1006,7 +1015,8 @@ httpd_host_t *vlc_https_HostNew( vlc_object_t *obj )
         free( crl );
     }
 
-    return httpd_HostCreate( obj, "http-host", "https-port", tls );
+    return httpd_HostCreate( obj, &httpd.https,
+                             "http-host", "https-port", tls );
 
 error:
     vlc_tls_ServerDelete( tls );
@@ -1015,38 +1025,25 @@ error:
 
 httpd_host_t *vlc_rtsp_HostNew( vlc_object_t *p_this )
 {
-    return httpd_HostCreate( p_this, "rtsp-host", "rtsp-port", NULL );
+    return httpd_HostCreate( p_this, &httpd.rtsp,
+                             "rtsp-host", "rtsp-port", NULL );
 }
 
-static struct httpd_t
-{
-    vlc_mutex_t  mutex;
-
-    httpd_host_t **host;
-    int          i_host;
-} httpd = { VLC_STATIC_MUTEX, NULL, 0 };
-
 static httpd_host_t *httpd_HostCreate( vlc_object_t *p_this,
+                                       httpd_host_t **hostp,
                                        const char *hostvar,
                                        const char *portvar,
                                        vlc_tls_creds_t *p_tls )
 {
     httpd_host_t *host;
-    unsigned port = var_InheritInteger( p_this, portvar );
 
     /* to be sure to avoid multiple creation */
     vlc_mutex_lock( &httpd.mutex );
 
     /* verify if it already exist */
-    for( int i = 0; i < httpd.i_host; i++ )
+    host = *hostp;
+    if( host != NULL )
     {
-        host = httpd.host[i];
-
-        /* cannot mix TLS and non-TLS hosts */
-        if( host->port != port
-         || (host->p_tls != NULL) != (p_tls != NULL) )
-            continue;
-
         /* Increase existing matching host reference count.
          * The reference count is written under both the global httpd and the
          * host lock. It is read with either or both locks held. The global
@@ -1061,8 +1058,6 @@ static httpd_host_t *httpd_HostCreate( vlc_object_t *p_this,
         return host;
     }
 
-    host = NULL;
-
     /* create the new host */
     host = (httpd_host_t *)vlc_custom_create( p_this, sizeof (*host),
                                               "http host" );
@@ -1073,7 +1068,8 @@ static httpd_host_t *httpd_HostCreate( vlc_object_t *p_this,
     vlc_cond_init( &host->wait );
     host->i_ref = 1;
 
-    char *hostname = var_InheritString( p_this, hostvar );
+    char *hostname = var_InheritString( p_this->p_libvlc, hostvar );
+    unsigned port = var_InheritInteger( p_this->p_libvlc, portvar );
     host->fds = net_ListenTCP( p_this, hostname, port );
     free( hostname );
     if( host->fds == NULL )
@@ -1089,7 +1085,6 @@ static httpd_host_t *httpd_HostCreate( vlc_object_t *p_this,
         goto error;
     }
 
-    host->port     = port;
     host->i_url    = 0;
     host->url      = NULL;
     host->i_client = 0;
@@ -1104,8 +1099,7 @@ static httpd_host_t *httpd_HostCreate( vlc_object_t *p_this,
         goto error;
     }
 
-    /* now add it to httpd */
-    TAB_APPEND( httpd.i_host, httpd.host, host );
+    *hostp = host;
     vlc_mutex_unlock( &httpd.mutex );
 
     return host;
@@ -1150,7 +1144,6 @@ void httpd_HostDelete( httpd_host_t *host )
         msg_Dbg( host, "httpd_HostDelete: host still in use" );
         return;
     }
-    TAB_REMOVE( httpd.i_host, httpd.host, host );
 
     vlc_object_kill( host );
     vlc_join( host->thread, NULL );
@@ -1179,6 +1172,14 @@ void httpd_HostDelete( httpd_host_t *host )
     vlc_cond_destroy( &host->wait );
     vlc_mutex_destroy( &host->lock );
     vlc_object_release( host );
+    if( host == httpd.http )
+        httpd.http = NULL;
+    else if( host == httpd.https )
+        httpd.https = NULL;
+    else if( host == httpd.rtsp )
+        httpd.rtsp = NULL;
+    else
+        assert(0);
     vlc_mutex_unlock( &httpd.mutex );
 }
 
@@ -1301,6 +1302,8 @@ static void httpd_MsgInit( httpd_message_t *msg )
     msg->psz_url    = NULL;
     msg->psz_args   = NULL;
 
+    msg->i_channel  = -1;
+
     msg->i_name     = 0;
     msg->name       = NULL;
     msg->i_value    = 0;
@@ -1374,10 +1377,21 @@ static void httpd_ClientInit( httpd_client_t *cl, mtime_t now )
     cl->i_buffer_size = HTTPD_CL_BUFSIZE;
     cl->i_buffer = 0;
     cl->p_buffer = xmalloc( cl->i_buffer_size );
-    cl->b_stream_mode = false;
+    cl->i_mode   = HTTPD_CLIENT_FILE;
+    cl->b_read_waiting = false;
 
     httpd_MsgInit( &cl->query );
     httpd_MsgInit( &cl->answer );
+}
+
+void httpd_ClientModeStream( httpd_client_t *cl )
+{
+    cl->i_mode   = HTTPD_CLIENT_STREAM;
+}
+
+void httpd_ClientModeBidir( httpd_client_t *cl )
+{
+    cl->i_mode   = HTTPD_CLIENT_BIDIR;
 }
 
 char* httpd_ClientIP( const httpd_client_t *cl, char *ip, int *port )
@@ -1503,6 +1517,18 @@ static void httpd_ClientRecv( httpd_client_t *cl )
             cl->i_buffer += i_len;
         }
 
+        if( ( cl->i_buffer >= 4 ) && ( cl->p_buffer[0] == '$' ) )
+        {
+            /* Interleaved RTP over RTSP */
+            cl->query.i_proto = HTTPD_PROTO_RTSP;
+            cl->query.i_type  = HTTPD_MSG_CHANNEL;
+            cl->query.i_channel = cl->p_buffer[1];
+            cl->query.i_body  = (cl->p_buffer[2] << 8)|cl->p_buffer[3];
+            cl->query.p_body  = xmalloc( cl->query.i_body );
+            cl->i_buffer      -= 4;
+            memcpy( cl->query.p_body, cl->p_buffer + 4, cl->i_buffer );
+        }
+        else
         /* The smallest legal request is 7 bytes ("GET /\r\n"),
          * this is the maximum we can ask at this point. */
         if( cl->i_buffer >= 7 )
@@ -1702,27 +1728,16 @@ static void httpd_ClientRecv( httpd_client_t *cl )
                             *p2++ = '\0';
                         }
                         if( !strncasecmp( p, ( cl->query.i_proto
-                             == HTTPD_PROTO_HTTP ) ? "http:" : "rtsp:", 5 ) )
+                                   == HTTPD_PROTO_HTTP ) ? "http" : "rtsp", 4 )
+                         && p[4 + !!strchr( "sS", p[4] )] == ':' )
                         {   /* Skip hier-part of URL (if present) */
-                            p += 5;
+                            p = strchr( p, ':' ) + 1; /* skip URI scheme */
                             if( !strncmp( p, "//", 2 ) ) /* skip authority */
                             {   /* see RFC3986 §3.2 */
                                 p += 2;
-                                p += strcspn( p, "/?#" );
+                                while( *p && !strchr( "/?#", *p ) ) p++;
                             }
                         }
-                        else
-                        if( !strncasecmp( p, ( cl->query.i_proto
-                             == HTTPD_PROTO_HTTP ) ? "https:" : "rtsps:", 6 ) )
-                        {   /* Skip hier-part of URL (if present) */
-                            p += 6;
-                            if( !strncmp( p, "//", 2 ) ) /* skip authority */
-                            {   /* see RFC3986 §3.2 */
-                                p += 2;
-                                p += strcspn( p, "/?#" );
-                            }
-                        }
-
                         cl->query.psz_url = strdup( p );
                         if( ( p3 = strchr( cl->query.psz_url, '?' ) )  )
                         {
@@ -1932,7 +1947,8 @@ static void httpd_ClientSend( httpd_client_t *cl )
 
         if( cl->i_buffer >= cl->i_buffer_size )
         {
-            if( cl->answer.i_body == 0  && cl->answer.i_body_offset > 0 )
+            if( cl->answer.i_body == 0  && cl->answer.i_body_offset > 0 &&
+                !cl->b_read_waiting )
             {
                 /* catch more body data */
                 int     i_msg = cl->query.i_type;
@@ -2081,10 +2097,35 @@ static void* httpd_HostThread( void *data )
                 httpd_MsgInit( answer );
 
                 /* Handle what we received */
-                if( i_msg == HTTPD_MSG_ANSWER )
+                if( (cl->i_mode != HTTPD_CLIENT_BIDIR) &&
+                    (i_msg == HTTPD_MSG_ANSWER || i_msg == HTTPD_MSG_CHANNEL) )
                 {
+                    /* we can only receive request from client when not
+                     * in BIDIR mode */
                     cl->url     = NULL;
                     cl->i_state = HTTPD_CLIENT_DEAD;
+                }
+                else if( i_msg == HTTPD_MSG_ANSWER )
+                {
+                    /* We are in BIDIR mode, trigger the callback and then
+                     * check for new data */
+                    if( cl->url && cl->url->catch[i_msg].cb )
+                    {
+                        cl->url->catch[i_msg].cb( cl->url->catch[i_msg].p_sys,
+                                                  cl, NULL, query );
+                    }
+                    cl->i_state = HTTPD_CLIENT_WAITING;
+                }
+                else if( i_msg == HTTPD_MSG_CHANNEL )
+                {
+                    /* We are in BIDIR mode, trigger the callback and then
+                     * check for new data */
+                    if( cl->url && cl->url->catch[i_msg].cb )
+                    {
+                        cl->url->catch[i_msg].cb( cl->url->catch[i_msg].p_sys,
+                                                  cl, NULL, query );
+                    }
+                    cl->i_state = HTTPD_CLIENT_WAITING;
                 }
                 else if( i_msg == HTTPD_MSG_OPTIONS )
                 {
@@ -2282,7 +2323,7 @@ static void* httpd_HostThread( void *data )
             }
             else if( cl->i_state == HTTPD_CLIENT_SEND_DONE )
             {
-                if( !cl->b_stream_mode || cl->answer.i_body_offset == 0 )
+                if( cl->i_mode == HTTPD_CLIENT_FILE || cl->answer.i_body_offset == 0 )
                 {
                     const char *psz_connection = httpd_MsgGet( &cl->answer, "Connection" );
                     const char *psz_query = httpd_MsgGet( &cl->query, "Connection" );
@@ -2323,6 +2364,19 @@ static void* httpd_HostThread( void *data )
                     }
                     httpd_MsgClean( &cl->answer );
                 }
+                else if( cl->b_read_waiting )
+                {
+                    /* we have a message waiting for us to read it */
+                    httpd_MsgClean( &cl->answer );
+                    httpd_MsgClean( &cl->query );
+
+                    cl->i_buffer = 0;
+                    cl->i_buffer_size = 1000;
+                    free( cl->p_buffer );
+                    cl->p_buffer = xmalloc( cl->i_buffer_size );
+                    cl->i_state = HTTPD_CLIENT_RECEIVING;
+                    cl->b_read_waiting = false;
+                }
                 else
                 {
                     int64_t i_offset = cl->answer.i_body_offset;
@@ -2357,6 +2411,13 @@ static void* httpd_HostThread( void *data )
                     cl->answer.i_body = 0;
                     cl->i_state = HTTPD_CLIENT_SENDING;
                 }
+            }
+
+            /* Special for BIDIR mode we also check reading */
+            if( cl->i_mode == HTTPD_CLIENT_BIDIR &&
+                cl->i_state == HTTPD_CLIENT_SENDING )
+            {
+                pufd->events |= POLLIN;
             }
 
             if (pufd->events != 0)
@@ -2422,6 +2483,13 @@ static void* httpd_HostThread( void *data )
             else if( cl->i_state == HTTPD_CLIENT_TLS_HS_OUT )
             {
                 httpd_ClientTlsHsOut( cl );
+            }
+
+            if( cl->i_mode == HTTPD_CLIENT_BIDIR &&
+                cl->i_state == HTTPD_CLIENT_SENDING &&
+                (pufd->revents & POLLIN) )
+            {
+                cl->b_read_waiting = true;
             }
         }
         vlc_mutex_unlock( &host->lock );

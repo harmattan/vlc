@@ -1,11 +1,12 @@
 /*****************************************************************************
  * AudioEffects.m: MacOS X interface module
  *****************************************************************************
- * Copyright (C) 2004-2011 VLC authors and VideoLAN
+ * Copyright (C) 2004-2011 the VideoLAN team
  * $Id$
  *
  * Authors: Felix Paul Kühne <fkuehne -at- videolan -dot- org>
  *          Jérôme Decoodt <djc@videolan.org>
+ *          
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -363,9 +364,9 @@ static bool GetEqualizerStatus( intf_thread_t *p_custom_intf,
     if( p_object == NULL )
         p_object = vlc_object_hold(pl_Get( p_intf ));
     NSInteger numberOfChosenPreset = [[sender selectedItem] tag];
-
+    
     var_SetString( p_object , "equalizer-preset" , preset_list[numberOfChosenPreset] );
-
+    
     NSString *preset = @"";
     const char *psz_values;
     for( int i = 0; i < EQZ_BANDS_MAX; i++ )
@@ -375,11 +376,11 @@ static bool GetEqualizerStatus( intf_thread_t *p_custom_intf,
     psz_values = [preset UTF8String];
     var_SetString( p_object, "equalizer-bands", psz_values );
     var_SetFloat( p_object, "equalizer-preamp", eqz_preset_10b[[[sender selectedItem] tag]].f_preamp);
-
+    
     [o_eq_preamp_sld setFloatValue: eqz_preset_10b[numberOfChosenPreset].f_preamp];
-
+    
     [self setBandSlidersValues:(float *)eqz_preset_10b[numberOfChosenPreset].f_amp];
-
+    
     /* save changed to config */
     config_PutPsz( p_intf, "equalizer-bands", psz_values );
     config_PutFloat( p_intf, "equalizer-preamp", eqz_preset_10b[numberOfChosenPreset].f_preamp );

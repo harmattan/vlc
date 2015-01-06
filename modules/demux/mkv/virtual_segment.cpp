@@ -351,9 +351,7 @@ virtual_chapter_c* virtual_edition_c::getChapterbyTimecode( int64_t time )
 {
     for( size_t i = 0; i < chapters.size(); i++ )
     {
-        if( time >= chapters[i]->i_virtual_start_time &&
-            ( chapters[i]->i_virtual_stop_time < 0 || time < chapters[i]->i_virtual_stop_time ) )
-            /*with the current implementation only the last chapter can have a negative virtual_stop_time*/
+        if( time >= chapters[i]->i_virtual_start_time && time < chapters[i]->i_virtual_stop_time )
             return chapters[i]->getSubChapterbyTimecode( time );
     }
 
@@ -503,6 +501,7 @@ int virtual_chapter_c::PublishChapters( input_title_t & title, int & i_user_chap
     {
         seekpoint_t *sk = vlc_seekpoint_New();
 
+        sk->i_level = i_level;
         sk->i_time_offset = i_virtual_start_time;
         if( p_chapter )
             sk->psz_name = strdup( p_chapter->psz_name.c_str() );
@@ -535,6 +534,7 @@ int virtual_edition_c::PublishChapters( input_title_t & title, int & i_user_chap
     {
         seekpoint_t *sk = vlc_seekpoint_New();
 
+        sk->i_level = i_level;
         sk->i_time_offset = 0;
         if( p_edition )
             sk->psz_name = strdup( p_edition->psz_name.c_str() );

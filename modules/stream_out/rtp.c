@@ -175,13 +175,6 @@ static const char *const ppsz_protocols[] = {
     "negative value or zero disables timeouts. The default is 60 (one " \
     "minute)." )
 
-#define RTSP_USER_TEXT N_("Username")
-#define RTSP_USER_LONGTEXT N_("User name that will be " \
-                              "requested to access the stream." )
-#define RTSP_PASS_TEXT N_("Password")
-#define RTSP_PASS_LONGTEXT N_("Password that will be " \
-                              "requested to access the stream." )
-
 static int  Open ( vlc_object_t * );
 static void Close( vlc_object_t * );
 
@@ -257,10 +250,6 @@ vlc_module_begin ()
                  RTSP_HOST_LONGTEXT, true )
     add_integer( "rtsp-timeout", 60, RTSP_TIMEOUT_TEXT,
                  RTSP_TIMEOUT_LONGTEXT, true )
-    add_string( "sout-rtsp-user", "",
-                RTSP_USER_TEXT, RTSP_USER_LONGTEXT, true )
-    add_password( "sout-rtsp-pwd", "",
-                  RTSP_PASS_TEXT, RTSP_PASS_LONGTEXT, true )
 
 vlc_module_end ()
 
@@ -728,26 +717,18 @@ static void SDPHandleUrl( sout_stream_t *p_stream, const char *psz_url )
             goto out;
         }
 
-        if( url.psz_host != NULL && *url.psz_host )
+        if( url.psz_host != NULL )
         {
-            /* msg_Err( p_stream, "\"%s\" RTSP host ignored", url.psz_host );
+            msg_Err( p_stream, "\"%s\" RTSP host ignored", url.psz_host );
             msg_Info( p_stream, "Pass --rtsp-host=%s on the command line "
-                      "instead.", url.psz_host ); */
-
-            var_Create( p_stream, "rtsp-host", VLC_VAR_STRING );
-            var_SetString( p_stream, "rtsp-host", url.psz_host );
+                      "instead.", url.psz_host );
         }
-        /* if( url.i_port != 0 )
+        if( url.i_port != 0 )
         {
             msg_Err( p_stream, "\"%u\" RTSP port ignored", url.i_port );
             msg_Info( p_stream, "Pass --rtsp-port=%u on the command line "
                       "instead.", url.i_port );
-        } */
-
-        if( url.i_port <= 0 ) url.i_port = 554;
-        var_Create( p_stream, "rtsp-port", VLC_VAR_INTEGER );
-        var_SetInteger( p_stream, "rtsp-port", url.i_port );
-
+        }
         p_sys->rtsp = RtspSetup( VLC_OBJECT(p_stream), NULL, url.psz_path );
         if( p_sys->rtsp == NULL )
             msg_Err( p_stream, "cannot export SDP as RTSP" );

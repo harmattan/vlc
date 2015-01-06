@@ -49,7 +49,6 @@ private slots:
     virtual void close();
     virtual void cancel();
     void fileBrowse();
-    void dumpChecked(bool);
 };
 
 #endif

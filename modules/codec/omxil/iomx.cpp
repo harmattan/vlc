@@ -5,15 +5,15 @@
  *
  * Authors: Martin Storsjo <martin@martin.st>
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
@@ -44,10 +44,15 @@ using namespace android;
 class IOMXContext {
 public:
     IOMXContext() {
+        refcount = 0;
+        init_refcount = 0;
     }
 
     sp<IOMX> iomx;
     List<IOMX::ComponentInfo> components;
+    int refcount;
+
+    int init_refcount;
 };
 
 static IOMXContext *ctx;
@@ -306,18 +311,26 @@ static OMX_ERRORTYPE iomx_free_handle(OMX_HANDLETYPE handle)
 
 static OMX_ERRORTYPE iomx_init()
 {
+    if (ctx->init_refcount > 0) {
+        ctx->init_refcount++;
+        return OMX_ErrorNone;
+    }
     OMXClient client;
     if (client.connect() != OK)
         return OMX_ErrorUndefined;
 
     ctx->iomx = client.interface();
+    ctx->init_refcount = 1;
     ctx->iomx->listNodes(&ctx->components);
     return OMX_ErrorNone;
 }
 
 static OMX_ERRORTYPE iomx_deinit()
 {
-    ctx->iomx = NULL;
+    ctx->init_refcount--;
+    if (ctx->init_refcount == 0) {
+        ctx->iomx = NULL;
+    }
     return OMX_ErrorNone;
 }
 
@@ -359,14 +372,18 @@ void* iomx_dlopen(const char *)
 {
     if (!ctx)
         ctx = new IOMXContext();
+    ctx->refcount++;
     return ctx;
 }
 
 void iomx_dlclose(void *handle)
 {
     IOMXContext *ctx = (IOMXContext*) handle;
-    delete ctx;
-    ::ctx = NULL;
+    ctx->refcount--;
+    if (!ctx->refcount) {
+        delete ctx;
+        ::ctx = NULL;
+    }
 }
 
 void *iomx_dlsym(void *, const char *name)

@@ -33,7 +33,8 @@ httprequests.processcommands()
 
 local browseTable=httprequests.getbrowsetable()
 
-httprequests.printTableAsJson(browseTable)
-
+print('{')
+httprequests.printTableAsJson(browseTable,0)
+print('}')
 
 ?>

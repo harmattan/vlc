@@ -1,7 +1,7 @@
 /*****************************************************************************
  * MainWindow.h: MacOS X interface module
  *****************************************************************************
- * Copyright (C) 2002-2011 VLC authors and VideoLAN
+ * Copyright (C) 2002-2011 VideoLAN
  * $Id$
  *
  * Authors: Felix Paul Kühne <fkuehne -at- videolan -dot- org>
@@ -159,10 +159,6 @@
 - (void)hasEndedFullscreen;
 - (void)hasBecomeFullscreen;
 - (void)setFrameOnMainThread:(NSData*)packedargs;
-
-/* lion's native fullscreen handling */
-- (void)windowWillEnterFullScreen:(NSNotification *)notification;
-- (void)windowWillExitFullScreen:(NSNotification *)notification;
 
 @end
 

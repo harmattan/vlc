@@ -473,6 +473,7 @@ CoverArtLabel::CoverArtLabel( QWidget *parent, intf_thread_t *_p_i )
     setMinimumHeight( 128 );
     setMinimumWidth( 128 );
     setMaximumHeight( 128 );
+    setMaximumWidth( 128 );
     setScaledContents( false );
     setAlignment( Qt::AlignCenter );
 
@@ -496,7 +497,7 @@ void CoverArtLabel::showArtUpdate( const QString& url )
     QPixmap pix;
     if( !url.isEmpty() && pix.load( url ) )
     {
-        pix = pix.scaled( minimumWidth(), maximumHeight(),
+        pix = pix.scaled( maximumWidth(), maximumHeight(),
                           Qt::KeepAspectRatioByExpanding,
                           Qt::SmoothTransformation );
     }

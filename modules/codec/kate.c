@@ -404,15 +404,14 @@ static int OpenDecoder( vlc_object_t *p_this )
             p_sys->p_tr = NULL;
             p_sys->b_use_tiger = false;
         }
-        else {
-            CHECK_TIGER_RET( tiger_renderer_set_surface_clear_color( p_sys->p_tr, 1, 0, 0, 0, 0 ) );
 
-            UpdateTigerFontEffect( p_dec );
-            UpdateTigerFontColor( p_dec );
-            UpdateTigerBackgroundColor( p_dec );
-            UpdateTigerQuality( p_dec );
-            UpdateTigerFontDesc( p_dec );
-        }
+        CHECK_TIGER_RET( tiger_renderer_set_surface_clear_color( p_sys->p_tr, 1, 0, 0, 0, 0 ) );
+
+        UpdateTigerFontEffect( p_dec );
+        UpdateTigerFontColor( p_dec );
+        UpdateTigerBackgroundColor( p_dec );
+        UpdateTigerQuality( p_dec );
+        UpdateTigerFontDesc( p_dec );
     }
 
 #else
@@ -797,8 +796,6 @@ static int TigerValidateSubpicture( subpicture_t *p_subpic,
                                     bool b_fmt_dst, const video_format_t *p_fmt_dst,
                                     mtime_t ts )
 {
-    VLC_UNUSED(p_fmt_src); VLC_UNUSED(p_fmt_dst);
-
     decoder_sys_t *p_sys = p_subpic->updater.p_sys->p_dec_sys;
 
     if( b_fmt_src || b_fmt_dst )

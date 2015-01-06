@@ -119,7 +119,7 @@ static void ReadMetaFromAPE( APE::Tag* tag, demux_meta_t*, vlc_meta_t* p_meta )
     APE::Item item;
 #define SET( keyName, metaName ) \
     item = tag->itemListMap()[keyName]; \
-    if( !item.isEmpty() ) vlc_meta_Set##metaName( p_meta, item.toString().toCString( true ) ); \
+    vlc_meta_Set##metaName( p_meta, item.toString().toCString( true ) );\
 
     SET( "COPYRIGHT", Copyright );
     SET( "LANGUAGE", Language );

@@ -127,14 +127,14 @@ void BlockDecode( demux_t *p_demux, KaxBlock *block, KaxSimpleBlock *simpleblock
 class attachment_c
 {
 public:
-    attachment_c( const std::string& _psz_file_name, const std::string& _psz_mime_type, int _i_size )
+    attachment_c( std::string _psz_file_name, std::string _psz_mime_type, int _i_size )
         :i_size(_i_size)
         ,psz_file_name( _psz_file_name)
         ,psz_mime_type( _psz_mime_type)
     {
         p_data = NULL;
     }
-    ~attachment_c() { free( p_data ); }
+    virtual ~attachment_c() { free( p_data ); }
 
     /* Allocs the data space. Returns true if allocation went ok */
     bool init()
@@ -143,9 +143,9 @@ public:
         return (p_data != NULL);
     }
 
-    const char* fileName() const { return psz_file_name.c_str(); }
-    const char* mimeType() const { return psz_mime_type.c_str(); }
-    int         size() const    { return i_size; }
+    const char* fileName() { return psz_file_name.c_str(); }
+    const char* mimeType() { return psz_mime_type.c_str(); }
+    int         size()     { return i_size; }
 
     void          *p_data;
 private:
@@ -155,10 +155,11 @@ private:
 };
 
 class matroska_segment_c;
-struct matroska_stream_c
+class matroska_stream_c
 {
+public:
     matroska_stream_c() :p_io_callback(NULL) ,p_estream(NULL) {}
-    ~matroska_stream_c()
+    virtual ~matroska_stream_c()
     {
         delete p_io_callback;
         delete p_estream;
@@ -174,7 +175,7 @@ struct matroska_stream_c
 /*****************************************************************************
  * definitions of structures and functions used by this plugins
  *****************************************************************************/
-struct mkv_track_t
+typedef struct
 {
 //    ~mkv_track_t();
 
@@ -220,9 +221,9 @@ struct mkv_track_t
     int                    i_compression_type;
     KaxContentCompSettings *p_compression_data;
 
-};
+} mkv_track_t;
 
-struct mkv_index_t
+typedef struct
 {
     int     i_track;
     int     i_block_number;
@@ -231,7 +232,7 @@ struct mkv_index_t
     int64_t i_time;
 
     bool       b_key;
-};
+} mkv_index_t;
 
 
 #endif /* _MKV_HPP_ */

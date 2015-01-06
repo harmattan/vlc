@@ -108,7 +108,7 @@ static void Destroy( vlc_object_t * );
     "that will be rendered on the video. " \
     "If set to something different than 0 this option will override the " \
     "relative font size." )
-#define OPACITY_TEXT N_("Text opacity")
+#define OPACITY_TEXT N_("Opacity")
 #define OPACITY_LONGTEXT N_("The opacity (inverse of transparency) of the " \
     "text that will be rendered on the video. 0 = transparent, " \
     "255 = totally opaque. " )
@@ -187,46 +187,46 @@ vlc_module_begin ()
         change_safe()
 
     /* hook to the color values list, with default 0x00ffffff = white */
-    add_rgb( "freetype-color", 0x00FFFFFF, COLOR_TEXT,
+    add_integer( "freetype-color", 0x00FFFFFF, COLOR_TEXT,
                  COLOR_LONGTEXT, false )
         change_integer_list( pi_color_values, ppsz_color_descriptions )
         change_safe()
 
-    add_bool( "freetype-bold", false, BOLD_TEXT, NULL, false )
+    add_bool( "freetype-bold", false, BOLD_TEXT, "", false )
         change_safe()
 
     add_integer_with_range( "freetype-background-opacity", 0, 0, 255,
-                            BG_OPACITY_TEXT, NULL, false )
+                            BG_OPACITY_TEXT, "", false )
         change_safe()
-    add_rgb( "freetype-background-color", 0x00000000, BG_COLOR_TEXT,
-             NULL, false )
+    add_integer( "freetype-background-color", 0x00000000, BG_COLOR_TEXT,
+                 "", false )
         change_integer_list( pi_color_values, ppsz_color_descriptions )
         change_safe()
 
     add_integer_with_range( "freetype-outline-opacity", 255, 0, 255,
-                            OUTLINE_OPACITY_TEXT, NULL, false )
+                            OUTLINE_OPACITY_TEXT, "", false )
         change_safe()
-    add_rgb( "freetype-outline-color", 0x00000000, OUTLINE_COLOR_TEXT,
-             NULL, false )
+    add_integer( "freetype-outline-color", 0x00000000, OUTLINE_COLOR_TEXT,
+                 "", false )
         change_integer_list( pi_color_values, ppsz_color_descriptions )
         change_safe()
     add_integer_with_range( "freetype-outline-thickness", 4, 0, 50, OUTLINE_THICKNESS_TEXT,
-             NULL, false )
+                 "", false )
         change_integer_list( pi_outline_thickness, ppsz_outline_thickness )
         change_safe()
 
     add_integer_with_range( "freetype-shadow-opacity", 128, 0, 255,
-                            SHADOW_OPACITY_TEXT, NULL, false )
+                            SHADOW_OPACITY_TEXT, "", false )
         change_safe()
-    add_rgb( "freetype-shadow-color", 0x00000000, SHADOW_COLOR_TEXT,
-             NULL, false )
+    add_integer( "freetype-shadow-color", 0x00000000, SHADOW_COLOR_TEXT,
+                 "", false )
         change_integer_list( pi_color_values, ppsz_color_descriptions )
         change_safe()
     add_float_with_range( "freetype-shadow-angle", -45, -360, 360,
-                          SHADOW_ANGLE_TEXT, NULL, false )
+                          SHADOW_ANGLE_TEXT, "", false )
         change_safe()
     add_float_with_range( "freetype-shadow-distance", 0.06, 0.0, 1.0,
-                          SHADOW_DISTANCE_TEXT, NULL, false )
+                          SHADOW_DISTANCE_TEXT, "", false )
         change_safe()
 
     add_obsolete_integer( "freetype-effect" );
@@ -545,10 +545,7 @@ static int GetFileFontByName( const char *font_name, char **psz_filename )
     wchar_t vbuffer[MAX_PATH];
     wchar_t dbuffer[256];
 
-    size_t fontname_len = strlen( font_name );
-
-    if( RegOpenKeyEx(HKEY_LOCAL_MACHINE, FONT_DIR_NT, 0, KEY_READ, &hKey)
-            != ERROR_SUCCESS )
+    if( RegOpenKeyEx(HKEY_LOCAL_MACHINE, FONT_DIR_NT, 0, KEY_READ, &hKey) != ERROR_SUCCESS )
         return 1;
 
     for( int index = 0;; index++ )
@@ -556,10 +553,9 @@ static int GetFileFontByName( const char *font_name, char **psz_filename )
         DWORD vbuflen = MAX_PATH - 1;
         DWORD dbuflen = 255;
 
-        LONG i_result = RegEnumValueW( hKey, index, vbuffer, &vbuflen,
-                                       NULL, NULL, (LPBYTE)dbuffer, &dbuflen);
-        if( i_result != ERROR_SUCCESS )
-            return i_result;
+        if( RegEnumValueW( hKey, index, vbuffer, &vbuflen,
+                           NULL, NULL, (LPBYTE)dbuffer, &dbuflen) != ERROR_SUCCESS )
+            return 2;
 
         char *psz_value = FromWide( vbuffer );
 
@@ -572,7 +568,7 @@ static int GetFileFontByName( const char *font_name, char **psz_filename )
                 break;
         }
         else {
-            if( strncasecmp( psz_value, font_name, fontname_len ) == 0 )
+            if( strcasecmp( psz_value, font_name ) == 0 )
                 break;
         }
     }
@@ -596,9 +592,7 @@ static char* Win32_Select( filter_t *p_filter, const char* family,
                            bool b_bold, bool b_italic, int i_size, int *i_idx )
 {
     VLC_UNUSED( i_size );
-
-    if( strlen( family ) < 1 )
-        goto fail;
+    // msg_Dbg( p_filter, "Here in Win32_Select, asking for %s", family );
 
     /* */
     LOGFONT lf;
@@ -615,40 +609,21 @@ static char* Win32_Select( filter_t *p_filter, const char* family,
     EnumFontFamiliesEx(hDC, &lf, (FONTENUMPROC)&EnumFontCallback, (LPARAM)&psz_filename, 0);
     ReleaseDC(NULL, hDC);
 
+    if( psz_filename == NULL )
+        return NULL;
+
+    /* FIXME: increase i_idx, when concatenated strings  */
+    i_idx = 0;
+
     /* */
-    if( psz_filename != NULL )
-    {
-        /* FIXME: increase i_idx, when concatenated strings  */
-        i_idx = 0;
-
-        /* Prepend the Windows Font path, when only a filename was provided */
-        if( strchr( psz_filename, DIR_SEP_CHAR ) )
-            return psz_filename;
-        else
-        {
-            char *psz_tmp;
-            if( asprintf( &psz_tmp, "%s\\%s", p_filter->p_sys->psz_win_fonts_path, psz_filename ) == -1 )
-            {
-                free( psz_filename );
-                return NULL;
-            }
-            free( psz_filename );
-            return psz_tmp;
-        }
-    }
-    else /* Let's take any font we can */
-fail:
-    {
-        char *psz_tmp;
-        if( asprintf( &psz_tmp, "%s\\%s", p_filter->p_sys->psz_win_fonts_path, "arial.ttf" ) == -1 )
-            return NULL;
-        else
-            return psz_tmp;
-    }
+    char *psz_tmp;
+    if( asprintf( &psz_tmp, "%s\\%s", p_filter->p_sys->psz_win_fonts_path, psz_filename ) == -1 )
+        return NULL;
+    return psz_tmp;
 }
-#endif /* HAVE_WIN32 */
+#endif
 
-#endif /* HAVE_STYLES */
+#endif
 
 
 /*****************************************************************************
@@ -1478,8 +1453,7 @@ static int ProcessNodes( filter_t *p_filter,
     {
         rv = PushFont( &p_fonts,
                p_font_style->psz_fontname,
-               p_font_style->i_font_size > 0 ? p_font_style->i_font_size
-                                             : p_sys->i_font_size,
+               p_font_style->i_font_size,
                (p_font_style->i_font_color & 0xffffff) |
                    ((p_font_style->i_font_alpha & 0xff) << 24),
                (p_font_style->i_karaoke_background_color & 0xffffff) |
@@ -2375,8 +2349,7 @@ static int RenderCommon( filter_t *p_filter, subpicture_region_t *p_region_out,
         text_style_t *p_style;
         if( p_region_in->p_style )
             p_style = CreateStyle( p_region_in->p_style->psz_fontname,
-                                   p_region_in->p_style->i_font_size > 0 ? p_region_in->p_style->i_font_size
-                                                                         : p_sys->i_font_size,
+                                   p_region_in->p_style->i_font_size,
                                    (p_region_in->p_style->i_font_color & 0xffffff) |
                                    ((p_region_in->p_style->i_font_alpha & 0xff) << 24),
                                    0x00ffffff,
@@ -2619,6 +2592,9 @@ static int Create( vlc_object_t *p_this )
                  psz_fontfile ? psz_fontfile : "(null)" );
         goto error;
     }
+#ifdef HAVE_STYLES
+    free( psz_fontfile );
+#endif
 
     i_error = FT_Select_Charmap( p_sys->p_face, ft_encoding_unicode );
     if( i_error )
@@ -2648,10 +2624,6 @@ static int Create( vlc_object_t *p_this )
 #endif
 
     LoadFontsFromAttachments( p_filter );
-
-#ifdef HAVE_STYLES
-    free( psz_fontfile );
-#endif
 
     return VLC_SUCCESS;
 

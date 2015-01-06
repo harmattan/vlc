@@ -67,14 +67,9 @@ static bool signal_ignored (int signum)
 
 static void vlc_kill (void *data)
 {
-#ifndef __OS2__
     pthread_t *ps = data;
 
     pthread_kill (*ps, SIGTERM);
-#else
-    // send a signal to the main thread
-    kill (getpid(), SIGTERM);
-#endif
 }
 
 static void exit_timeout (int signum)
@@ -213,7 +208,7 @@ int main( int i_argc, const char *ppsz_argv[] )
 
     libvlc_set_user_agent (vlc, "VLC media player", "VLC/"PACKAGE_VERSION);
 
-#if !defined (HAVE_MAEMO) && !defined __APPLE__ && !defined (__OS2__)
+#if !defined (HAVE_MAEMO) && !defined __APPLE__
     libvlc_add_intf (vlc, "globalhotkeys,none");
 #endif
     if (libvlc_add_intf (vlc, NULL))
@@ -252,7 +247,7 @@ int main( int i_argc, const char *ppsz_argv[] )
 out:
     if (vlc != NULL)
         libvlc_release (vlc);
-    for (int i = 2; i < argc; i++)
+    for (int i = 1; i < argc; i++)
         LocaleFree (argv[i]);
 
     return 0;

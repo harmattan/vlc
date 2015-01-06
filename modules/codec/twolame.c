@@ -1,12 +1,11 @@
 /*****************************************************************************
  * twolame.c: libtwolame encoder (MPEG-1/2 layer II) module
- *            (using libtwolame from http://www.twolame.org/)
+ *            (using libtwolame from http://users.tpg.com.au/adslblvi/)
  *****************************************************************************
  * Copyright (C) 2004-2005 the VideoLAN team
  * $Id$
  *
  * Authors: Christophe Massiot <massiot@via.ecp.fr>
- *          Gildas Bazin
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +18,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
 
 /*****************************************************************************
@@ -33,6 +32,8 @@
 #include <vlc_common.h>
 #include <vlc_plugin.h>
 #include <vlc_codec.h>
+#include <vlc_sout.h>
+#include <vlc_aout.h>
 
 #include <twolame.h>
 
@@ -130,8 +131,9 @@ static int OpenEncoder( vlc_object_t *p_this )
     encoder_sys_t *p_sys;
     int i_frequency;
 
-    if( p_enc->fmt_out.i_codec != VLC_CODEC_MP2 &&
-        p_enc->fmt_out.i_codec != VLC_CODEC_MPGA &&
+    if( p_enc->fmt_out.i_codec != VLC_CODEC_MPGA &&
+        p_enc->fmt_out.i_codec != VLC_FOURCC('m','p','2','a') &&
+        p_enc->fmt_out.i_codec != VLC_FOURCC('m','p','2',' ') &&
         !p_enc->b_force )
     {
         return VLC_EGENERIC;

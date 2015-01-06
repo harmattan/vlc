@@ -52,11 +52,10 @@
 # include <search.h>
 #endif
 
-#ifdef __OS2__
-# include <sys/socket.h>
-# include <netinet/in.h>
-# include <unistd.h>    // close(), write()
-#elif defined(WIN32)
+#ifndef WIN32
+# include <vlc_fs.h>
+# include <unistd.h>
+#else
 # include <io.h>
 # include <winsock2.h>
 # include <ws2tcpip.h>
@@ -66,9 +65,6 @@
 # define write( a, b, c ) send (a, b, c, 0)
 # undef  close
 # define close( a )       closesocket (a)
-#else
-# include <vlc_fs.h>
-# include <unistd.h>
 #endif
 
 #include <limits.h>
@@ -291,35 +287,35 @@ static void vlc_object_destroy( vlc_object_t *p_this )
 }
 
 
-#if defined(WIN32) || defined(__OS2__)
+#ifdef WIN32
 /**
  * select()-able pipes emulated using Winsock
  */
 # define vlc_pipe selectable_pipe
 static int selectable_pipe (int fd[2])
 {
-    struct sockaddr_in addr;
+    SOCKADDR_IN addr;
     int addrlen = sizeof (addr);
 
-    int l = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP),
-        c = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (l == -1 || c == -1)
+    SOCKET l = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP), a,
+           c = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if ((l == INVALID_SOCKET) || (c == INVALID_SOCKET))
         goto error;
 
     memset (&addr, 0, sizeof (addr));
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = htonl (INADDR_LOOPBACK);
-    if (bind (l, (struct sockaddr *)&addr, sizeof (addr))
-     || getsockname (l, (struct sockaddr *)&addr, &addrlen)
+    if (bind (l, (PSOCKADDR)&addr, sizeof (addr))
+     || getsockname (l, (PSOCKADDR)&addr, &addrlen)
      || listen (l, 1)
-     || connect (c, (struct sockaddr *)&addr, addrlen))
+     || connect (c, (PSOCKADDR)&addr, addrlen))
         goto error;
 
-    int a = accept (l, NULL, NULL);
-    if (a == -1)
+    a = accept (l, NULL, NULL);
+    if (a == INVALID_SOCKET)
         goto error;
 
-    close (l);
+    closesocket (l);
     //shutdown (a, 0);
     //shutdown (c, 1);
     fd[0] = c;
@@ -327,13 +323,13 @@ static int selectable_pipe (int fd[2])
     return 0;
 
 error:
-    if (l != -1)
-        close (l);
-    if (c != -1)
-        close (c);
+    if (l != INVALID_SOCKET)
+        closesocket (l);
+    if (c != INVALID_SOCKET)
+        closesocket (c);
     return -1;
 }
-#endif /* WIN32 || __OS2__ */
+#endif /* WIN32 */
 
 static vlc_mutex_t pipe_lock = VLC_STATIC_MUTEX;
 

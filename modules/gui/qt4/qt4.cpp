@@ -38,7 +38,6 @@
 #include "dialogs/help.hpp"     /* Launch Update */
 #include "recents.hpp"          /* Recents Item destruction */
 #include "util/qvlcapp.hpp"     /* QVLCApplication definition */
-#include "components/playlist/playlist_model.hpp" /* for ~PLModel() */
 #include <vlc_aout_intf.h>
 
 #ifdef Q_WS_X11
@@ -197,13 +196,8 @@ vlc_module_begin ()
     add_bool( "qt-minimal-view", false, QT_MINIMAL_MODE_TEXT,
               QT_MINIMAL_MODE_TEXT, false );
 
-    add_bool( "qt-system-tray",
-#ifdef HAVE_MAEMO
-            false,
-#else
-            true,
-#endif
-            SYSTRAY_TEXT, SYSTRAY_LONGTEXT, false)
+    add_bool( "qt-system-tray", true, SYSTRAY_TEXT,
+          SYSTRAY_LONGTEXT, false)
     add_bool( "qt-notification", true, NOTIFICATION_TEXT,
               NOTIFICATION_LONGTEXT, false )
     add_bool( "qt-start-minimized", false, MINIMIZED_TEXT,
@@ -362,7 +356,6 @@ static int Open( vlc_object_t *p_this, bool isDialogProvider )
     intf_sys_t *p_sys = p_intf->p_sys = new intf_sys_t;
     p_intf->p_sys->b_isDialogProvider = isDialogProvider;
     p_sys->p_mi = NULL;
-    p_sys->pl_model = NULL;
 
     /* */
     vlc_sem_init (&ready, 0);
@@ -558,9 +551,6 @@ static void *Thread( void *obj )
         getSettings()->setValue( "filedialog-path", p_intf->p_sys->filepath );
     else
         getSettings()->remove( "filedialog-path" );
-
-    /* */
-    delete p_intf->p_sys->pl_model;
 
     /* Delete the configuration. Application has to be deleted after that. */
     delete p_intf->p_sys->mainSettings;

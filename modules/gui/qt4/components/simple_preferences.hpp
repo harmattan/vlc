@@ -59,15 +59,13 @@ enum {
     CachingLowest = 100,
     CachingLow    = 200,
     CachingNormal = 300,
-    CachingHigh   = 500,
-    CachingHigher = 1000
+    CachingHigh   = 750,
+    CachingHigher = 2500
 };
 
 enum {
 #ifdef WIN32
        directxW,
-#elif defined( __OS2__)
-       kaiW,
 #else
        alsaW,
        ossW,
@@ -81,7 +79,6 @@ enum {
 };
 enum { inputLE, cachingCoB };
 enum { skinRB, qtRB, styleCB };
-enum { shadowCB, backgroundCB };
 
 class ConfigControl;
 class QComboBox;
@@ -116,7 +113,6 @@ public:
     virtual ~SPrefsPanel();
     void apply();
     void clean();
-
 private:
     intf_thread_t *p_intf;
     QList<ConfigControl *> controls;

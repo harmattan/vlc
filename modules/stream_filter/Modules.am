@@ -1,5 +1,3 @@
-DIST_SUBDIRS = dash
-
 SOURCES_decomp = decomp.c
 SOURCES_stream_filter_record = record.c
 SOURCES_stream_filter_httplive = httplive.c

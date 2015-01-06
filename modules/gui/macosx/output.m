@@ -1,7 +1,7 @@
 /*****************************************************************************
  * output.m: MacOS X Output Dialog
  *****************************************************************************
- * Copyright (C) 2002-2007 VLC authors and VideoLAN
+ * Copyright (C) 2002-2007 the VideoLAN team
  * $Id$
  *
  * Authors: Jon Lech Johansen <jon-vl@nanocrew.net>

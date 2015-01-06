@@ -155,6 +155,8 @@ http_auth_ParseWwwAuthenticateHeader
 http_auth_ParseAuthenticationInfoHeader
 http_auth_FormatAuthorizationHeader
 httpd_ClientIP
+httpd_ClientModeBidir
+httpd_ClientModeStream
 httpd_FileDelete
 httpd_FileNew
 httpd_HandlerDelete
@@ -549,6 +551,8 @@ vlc_hold
 vlc_iconv
 vlc_iconv_close
 vlc_iconv_open
+vlc_inet_ntop
+vlc_inet_pton
 vlc_join
 vlc_list_children
 vlc_list_release

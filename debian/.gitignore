@@ -1,0 +1,10 @@
+*.debhelper
+*.substvars
+cdbs-*
+files
+libvlc5
+libvlc5-dbg
+libvlc-dev
+tmp
+vlc
+vlc-player

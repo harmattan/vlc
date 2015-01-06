@@ -105,8 +105,8 @@ vlc_module_begin ()
     set_subcategory( SUBCAT_INTERFACE_HOTKEYS )
 
     add_integer( "hotkeys-mousewheel-mode", MOUSEWHEEL_VOLUME,
-                 N_("MouseWheel up-down axis Control"),
-                 N_("The MouseWheel up-down (vertical) axis can control volume, position or "
+                 N_("MouseWheel x-axis Control"),
+                 N_("MouseWheel x-axis can control volume, position or "
                     "mousewheel event can be ignored"), false )
             change_integer_list( i_mode_list, psz_mode_list_text )
 
@@ -218,9 +218,12 @@ static int PutAction( intf_thread_t *p_intf, int i_action )
         }
 
         /* Interface showing */
-        case ACTIONID_INTF_TOGGLE_FSC:
+        case ACTIONID_INTF_SHOW:
+            var_SetBool( p_intf->p_libvlc, "intf-show", true );
+            break;
+
         case ACTIONID_INTF_HIDE:
-            var_TriggerCallback( p_intf->p_libvlc, "intf-toggle-fscontrol" );
+            var_SetBool( p_intf->p_libvlc, "intf-show", false );
             break;
 
         case ACTIONID_INTF_BOSS:

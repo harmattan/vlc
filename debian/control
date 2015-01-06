@@ -1,0 +1,76 @@
+Source: vlc
+Section: graphics
+Priority: optional
+Maintainer: Rémi Denis-Courmont <remi@remlab.net>
+Build-Depends: dpkg-dev (>= 1.13.2), debhelper (>= 5), cdbs, autotools-dev,
+               autoconf, automake, libtool, gettext, autopoint, cmake,
+               zlib1g-dev, libxml2-dev, libpng12-dev,
+               libfreetype6-dev, libfontconfig1-dev,
+               libpulse-dev, libasound2-dev,
+               libogg-dev, libflac-dev, liborc-dev,
+               libdbus-1-dev, libproxy-dev, mce-dev,
+               libxcb-shm0-dev, libxcb-xv0-dev, libxcb-composite0-dev,
+               libx11-dev, libqt4-dev
+Build-Conflicts: libpango1.0-dev, libfribidi0-dev, libsdl1.2-dev,
+                 liblua5.1-0-dev, libosso-dev
+Standards-Version: 3.8.0
+Homepage: http://www.videolan.org/vlc/
+
+Package: libvlc5
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Provides: libvlccore5
+Description: VLC media run-time
+ This package includes the core LibVLC media framework library.
+
+Package: libvlc-dev
+Architecture: any
+Section: libdevel
+Depends: libvlc5 (= ${binary:Version})
+Provides: libvlccore-dev, libvlc5-dev, libvlccore5-dev
+Description: development files for VLC media player
+ Install this if you want to build bindings or external plugins for VLC.
+
+Package: libvlc5-dbg
+Architecture: any
+Section: libdevel
+Priority: extra
+Depends: libvlc5 (= ${binary:Version})
+Provides: libvlccore5-dbg, vlc-dbg
+Description: debug symbols for VLC media player
+ Install this if you want to debug VLC media player.
+
+Package: vlc-player
+Architecture: any
+Section: graphics
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: VLC media player
+ VLC media player is a versatile multimedia player for various audio and video
+ formats (MPEG, DivX, H.264, MP3, Xiph, Flash, ...) and streaming protocols.
+ .
+ This package includes the VLC media player, but it lacks streaming output
+ to save space on your device. Install this if you do not need to stream,
+ record or transcode with your device.
+
+Package: vlc-streamer
+Architecture: any
+Section: graphics
+Depends: ${shlibs:Depends}, ${misc:Depends}, vlc-player (= ${binary:Version})
+Description: VLC encoding and streaming
+ VLC media player is a versatile multimedia player for various audio and video
+ formats (MPEG, DivX, H.264, MP3, Xiph, Flash, ...) and streaming protocols.
+ .
+ This package includes the streaming and encoding functionality of the
+ VLC media player.
+
+Package: vlc-weird
+Architecture: any
+Section: graphics
+Priority: extra
+Depends: ${shlibs:Depends}, ${misc:Depends}, vlc-player (= ${binary:Version})
+Description: VLC weird plugins
+ VLC media player is a versatile multimedia player for various audio and video
+ formats (MPEG, DivX, H.264, MP3, Xiph, Flash, ...) and streaming protocols.
+ .
+ This package includes various official VLC plugins which are not normally
+ useful on a mobile handsets.

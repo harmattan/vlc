@@ -36,8 +36,6 @@
 # include "config.h"
 #endif
 
-#include <time.h>
-
 #include <vlc_common.h>
 #include <vlc_plugin.h>
 #include <vlc_interface.h>

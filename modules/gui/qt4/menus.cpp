@@ -36,19 +36,17 @@
 
 #include <vlc_common.h>
 #include <vlc_intf_strings.h>
-#include <vlc_vout.h>                             /* vout_thread_t */
-#include <vlc_aout.h>                             /* audio_output_t */
+#include <vlc_vout.h>              /* vout_thread_t */
+#include <vlc_aout.h>
 
 #include "menus.hpp"
 
-#include "main_interface.hpp"                     /* View modifications */
-#include "dialogs_provider.hpp"                   /* Dialogs display */
-#include "input_manager.hpp"                      /* Input Management */
-#include "recents.hpp"                            /* Recent Items */
-#include "actions_manager.hpp"                    /* Actions Management: play+volume */
-#include "extensions_manager.hpp"                 /* Extensions menu */
-#include "util/qmenuview.hpp"                     /* Simple Playlist menu */
-#include "components/playlist/playlist_model.hpp" /* PLModel getter */
+#include "main_interface.hpp"      /* View modifications */
+#include "dialogs_provider.hpp"    /* Dialogs display */
+#include "input_manager.hpp"       /* Input Management */
+#include "recents.hpp"             /* Recent Items */
+#include "actions_manager.hpp"     /* Actions Management: play+volume */
+#include "extensions_manager.hpp"  /* Extensions menu*/
 
 #include <QMenu>
 #include <QMenuBar>
@@ -1064,15 +1062,6 @@ void QVLCMenu::PopupMenu( intf_thread_t *p_intf, bool show )
         menu->addMenu( submenu );
     }
 
-    /* */
-    QMenuView *plMenu = new QMenuView( menu );
-    plMenu->setTitle( qtr("Playlist") );
-    PLModel *model = PLModel::getPLModel( p_intf );
-    plMenu->setModel( model );
-    CONNECT( plMenu, activated(const QModelIndex&),
-             model, activateItem(const QModelIndex&));
-    menu->addMenu( plMenu );
-
     /* Static entries for ending, like open */
     PopupMenuStaticEntries( menu );
 
@@ -1083,6 +1072,7 @@ void QVLCMenu::PopupMenu( intf_thread_t *p_intf, bool show )
 #undef POPUP_BOILERPLATE
 #undef BAR_DADD
 
+#ifndef HAVE_MAEMO
 /************************************************************************
  * Systray Menu                                                         *
  ************************************************************************/
@@ -1128,6 +1118,7 @@ void QVLCMenu::updateSystrayMenu( MainInterface *mi,
     /* Set the menu */
     mi->getSysTray()->setContextMenu( sysMenu );
 }
+#endif
 
 
 #undef PUSH_VAR
@@ -1512,7 +1503,8 @@ void QVLCMenu::updateRecents( intf_thread_t *p_intf )
 
         if( !l.count() )
         {
-            recentsMenu->setEnabled( false );
+            action = recentsMenu->addAction( qtr(" - Empty - ") );
+            action->setEnabled( false );
         }
         else
         {
@@ -1521,10 +1513,10 @@ void QVLCMenu::updateRecents( intf_thread_t *p_intf )
                 char *psz_temp = decode_URI_duplicate( qtu( l.at( i ) ) );
 
                 action = recentsMenu->addAction(
-                        QString( i < 9 ? "&%1: ": "%1: " ).arg( i + 1 ) +
+                        QString( "&%1: " ).arg( i + 1 ) +
                             QApplication::fontMetrics().elidedText( psz_temp, Qt::ElideLeft, 400 ),
                         rmrl->signalMapper, SLOT( map() ),
-                        i < 9 ? QString( "Ctrl+%1" ).arg( i + 1 ) : "" );
+                        i <= 9 ? QString( "Ctrl+%1" ).arg( i + 1 ) : "" );
                 rmrl->signalMapper->setMapping( action, l.at( i ) );
 
                 free( psz_temp );

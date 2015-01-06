@@ -1,0 +1,90 @@
+#!/usr/bin/make -f
+
+include /usr/share/cdbs/1/rules/utils.mk
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/autotools.mk
+
+DEB_AC_AUX_DIR = $(DEB_SRCDIR)/admin
+DEB_CONFIGURE_EXTRA_FLAGS = \
+	--config-cache \
+	--with-contrib \
+	--enable-option-checking \
+	--enable-silent-rules \
+	--disable-maintainer-mode \
+	--disable-dependency-tracking \
+	--disable-static \
+	--enable-shared \
+	--enable-fast-install \
+	--enable-libtool-lock \
+	--enable-nls \
+	--enable-rpath \
+	--disable-gprof \
+	--disable-cprof \
+	--disable-mmx \
+	--disable-sse \
+	--enable-neon \
+	--disable-altivec \
+	--disable-optimize-memory \
+	--enable-optimizations \
+	--enable-debug \
+	--disable-run-as-root \
+	--disable-coverage \
+	--enable-omxil \
+	--disable-glx \
+	--disable-libgcrypt \
+	--disable-gnutls \
+	--disable-update-check \
+	--disable-skins2
+
+OPTFLAGS=-mtune=cortex-a8
+CFLAGS+=$(OPTFLAGS)
+CXXFLAGS+=$(OPTFLAGS)
+# This breaks some configure library checks:
+#LDFLAGS+=-Wl,--as-needed
+LDFLAGS+=-Wl,-z,defs
+
+DEB_DH_INSTALL_SOURCEDIR = $(DEB_SRCDIR)/debian/tmp
+DEB_DH_STRIP_ARGS = --dbg-package=libvlc5-dbg
+
+clean::
+	-cd contrib/maemo && make mostlyclean
+	rm -f stamp-contribs stamp-bootstrap
+
+pre-build:: stamp-contribs stamp-bootstrap
+
+stamp-contribs:
+	mkdir -p contrib/maemo
+	# HACK to avoid dependencies on zlib
+	cd contrib/tarballs && touch zlib-1.2.5.tar.gz
+	cd contrib/maemo && touch .sum-zlib zlib .zlib
+	# gcrypt, jpeg, zlib available but not detected
+	# gnutls useless without certificates
+	# fribidi useless w/o RTL language fonts
+	# projectM requiring unavailable OpenGL stuff (bug in contrib?)
+	# SDL_image ?
+	cd contrib/maemo && ../bootstrap \
+		--disable-disc \
+		--disable-gnutls \
+		--disable-fribidi \
+		--disable-SDL_image \
+		--disable-projectM \
+		--disable-gcrypt --disable-jpeg --disable-zlib
+	cd contrib/maemo && make
+	touch $@
+
+stamp-bootstrap:
+	./bootstrap
+	touch $@
+
+common-install-arch::
+	# Remove libtool cruft
+	find debian/tmp/ -name '*.la' -exec rm -f -- {} ';'
+	# No doc in Maemo
+	rm -Rf debian/tmp/usr/share/doc debian/tmp/usr/share/man
+	find debian/tmp -name 'README*' -exec rm -f -- {} ';'
+	# Useless:
+	rm -Rf debian/tmp/usr/share/vlc/utils
+	rm -Rf debian/tmp/usr/share/kde4
+	rm -f debian/tmp/usr/bin/vlc-wrapper
+
+common-binary-post-install-arch:: list-missing

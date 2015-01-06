@@ -68,7 +68,6 @@ static const entry_t p_list_video[] = {
         A("MPEG"),
         A("mpg2"),
         A("MPG2"),
-        A("H262"),
 
         E("PIM1", "Pinnacle DC1000 (MPEG-1 Video)"),
 
@@ -627,7 +626,7 @@ static const entry_t p_list_video[] = {
 
     B(VLC_CODEC_INDEO2, "Indeo Video v2"),
         A("IV20"),
-        E("RT21", "Indeo Video 2.1" ),
+        A("RT21"),
 
     /* Flash Screen Video */
     B(VLC_CODEC_FLASHSV, "Flash Screen Video"),
@@ -855,7 +854,7 @@ static const entry_t p_list_video[] = {
     B(VLC_CODEC_PAM, "PAM Image"),
         A("pam "),
 
-    B(VLC_CODEC_JPEGLS, "JPEG-LS"),
+    B(VLC_CODEC_JPEGLS, "Lossless JPEG"),
         A("MJLS"),
 
     B(VLC_CODEC_JPEG, "JPEG"),

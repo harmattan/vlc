@@ -36,6 +36,9 @@ enum
     /* answer */
     HTTPD_MSG_ANSWER,
 
+    /* channel communication */
+    HTTPD_MSG_CHANNEL,
+
     /* http request */
     HTTPD_MSG_GET,
     HTTPD_MSG_HEAD,
@@ -79,6 +82,9 @@ struct httpd_message_t
        and POST(body) through the same code */
     uint8_t *psz_args;
 
+    /* for rtp over rtsp */
+    int     i_channel;
+
     /* options */
     int     i_name;
     char    **name;
@@ -108,6 +114,9 @@ VLC_API int httpd_UrlCatch( httpd_url_t *, int i_msg, httpd_callback_t, httpd_ca
 /* delete a url */
 VLC_API void httpd_UrlDelete( httpd_url_t * );
 
+/* Default client mode is FILE, use these to change it */
+VLC_API void httpd_ClientModeStream( httpd_client_t *cl );
+VLC_API void httpd_ClientModeBidir( httpd_client_t *cl );
 VLC_API char* httpd_ClientIP( const httpd_client_t *cl, char *, int * );
 VLC_API char* httpd_ServerIP( const httpd_client_t *cl, char *, int * );
 

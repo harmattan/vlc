@@ -88,6 +88,9 @@ void system_Init( void )
     timeBeginPeriod(5);
 #endif
 
+    /* Call mdate() once to make sure it is initialized properly */
+    mdate();
+
     /* WinSock Library Init. */
     if( !WSAStartup( MAKEWORD( 2, 2 ), &Data ) )
     {

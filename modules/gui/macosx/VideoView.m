@@ -1,7 +1,7 @@
 /*****************************************************************************
  * VideoView.m: MacOS X video output module
  *****************************************************************************
- * Copyright (C) 2002-2011 VLC authors and VideoLAN
+ * Copyright (C) 2002-2011 the VideoLAN team
  * $Id$
  *
  * Authors: Derk-Jan Hartman <hartman at videolan dot org>
@@ -153,13 +153,6 @@ int DeviceCallback( vlc_object_t *p_this, const char *psz_variable,
 
 - (void)closeVout
 {
-    vout_thread_t * p_vout = getVout();
-    if( !p_vout )
-    {
-        var_DelCallback( p_vout, "video-device", DeviceCallback, NULL );
-        vlc_object_release( p_vout );
-    }
-
     /* Make sure we don't see a white flash */
     [o_view removeFromSuperview];
     [o_view release];

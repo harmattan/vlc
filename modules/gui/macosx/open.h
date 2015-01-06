@@ -1,7 +1,7 @@
 /*****************************************************************************
  * open.h: Open dialogues for VLC's MacOS X port
  *****************************************************************************
- * Copyright (C) 2002-2011 VLC authors and VideoLAN
+ * Copyright (C) 2002-2011 the VideoLAN team
  * $Id$
  *
  * Authors: Jon Lech Johansen <jon-vl@nanocrew.net>

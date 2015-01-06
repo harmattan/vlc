@@ -76,8 +76,6 @@
  #define PRIo64 "llo"
  #undef PRIx64
  #define PRIx64 "llx"
- #define snprintf __mingw_snprintf
- #define vsnprintf __mingw_vsnprintf
 #endif
 
 /* Function attributes for compiler warnings */
@@ -478,13 +476,6 @@ typedef int ( * vlc_callback_t ) ( vlc_object_t *,      /* variable's object */
 # include <windows.h>
 #endif
 
-#ifdef __OS2__
-#   define OS2EMX_PLAIN_CHAR
-#   define INCL_BASE
-#   define INCL_PM
-#   include <os2.h>
-#endif
-
 #include "vlc_mtime.h"
 #include "vlc_threads.h"
 
@@ -638,12 +629,6 @@ static inline unsigned popcount (unsigned x)
     return count;
 #endif
 }
-
-#ifdef __OS2__
-#   undef bswap16
-#   undef bswap32
-#   undef bswap64
-#endif
 
 /** Byte swap (16 bits) */
 VLC_USED

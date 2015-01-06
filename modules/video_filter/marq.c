@@ -164,7 +164,7 @@ vlc_module_begin ()
     /* 5 sets the default to top [1] left [4] */
     add_integer_with_range( CFG_PREFIX "opacity", 255, 0, 255,
         OPACITY_TEXT, OPACITY_LONGTEXT, false )
-    add_rgb( CFG_PREFIX "color", 0xFFFFFF, COLOR_TEXT, COLOR_LONGTEXT,
+    add_integer( CFG_PREFIX "color", 0xFFFFFF, COLOR_TEXT, COLOR_LONGTEXT,
                  false )
         change_integer_list( pi_color_values, ppsz_color_descriptions )
     add_integer( CFG_PREFIX "size", -1, SIZE_TEXT, SIZE_LONGTEXT,
@@ -218,7 +218,7 @@ static int CreateFilter( vlc_object_t *p_this )
     var_AddCallback( p_filter, "marq-refresh", MarqueeCallback, p_sys );
     CREATE_VAR( i_pos, Integer, "marq-position" );
     CREATE_VAR( psz_marquee, String, "marq-marquee" );
-    p_sys->p_style->i_font_alpha = var_CreateGetIntegerCommand( p_filter,
+    p_sys->p_style->i_font_alpha = 255 - var_CreateGetIntegerCommand( p_filter,
                                                             "marq-opacity" );
     var_AddCallback( p_filter, "marq-opacity", MarqueeCallback, p_sys );
     CREATE_VAR( p_style->i_font_color, Integer, "marq-color" );
@@ -357,7 +357,7 @@ static int MarqueeCallback( vlc_object_t *p_this, char const *psz_var,
     }
     else if ( !strcmp( psz_var, "marq-opacity" ) )
     {
-        p_sys->p_style->i_font_alpha = newval.i_int;
+        p_sys->p_style->i_font_alpha = 255 - newval.i_int;
     }
     else if ( !strcmp( psz_var, "marq-size" ) )
     {

@@ -183,7 +183,7 @@ int fsync (int fd);
 
 /* dirent.h */
 #ifndef HAVE_DIRFD
-#if defined(__APPLE__) || defined(__OS2__)
+#ifdef __APPLE__
 #undef dirfd
 #endif
 int dirfd (DIR *);
@@ -250,8 +250,11 @@ void swab (const void *, void *, ssize_t);
 
 /* Socket stuff */
 #ifndef HAVE_INET_PTON
-int inet_pton(int, const char *, void *);
-const char *inet_ntop(int, const void *, char *, int);
+# define inet_pton vlc_inet_pton
+#endif
+
+#ifndef HAVE_INET_NTOP
+# define inet_ntop vlc_inet_ntop
 #endif
 
 #ifndef HAVE_STRUCT_POLLFD
@@ -277,6 +280,7 @@ struct pollfd
 #elif defined (HAVE_MAEMO)
 # include <poll.h>
 # define poll(a, b, c) vlc_poll(a, b, c)
+int vlc_poll (struct pollfd *, unsigned, int);
 #endif
 
 #ifndef HAVE_IF_NAMEINDEX

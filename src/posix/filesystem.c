@@ -191,24 +191,16 @@ char *vlc_readdir( DIR *dir )
     char *path = NULL;
 
     long len = fpathconf (dirfd (dir), _PC_NAME_MAX);
-#if !defined(__OS2__) || !defined(__INNOTEK_LIBC__)
+    if (len == -1)
+    {
 #ifdef NAME_MAX
-    /* POSIX says there shall we room for NAME_MAX bytes at all times */
-    if (/*len == -1 ||*/ len < NAME_MAX)
         len = NAME_MAX;
 #else
-    /* OS is broken. Lets assume there is no files left. */
-    if (len == -1)
-        return NULL;
+        errno = ENOMEM;
+        return NULL; // OS is broken. There is no sane way to fix this.
 #endif
+    }
     len += offsetof (struct dirent, d_name) + 1;
-#else /* __OS2__ && __INNOTEK_LIBC__ */
-    /* In the implementation of Innotek LIBC, aka kLIBC on OS/2,
-     * fpathconf (_PC_NAME_MAX) is broken, and d_name is not the last member
-     * of struct dirent.
-     * So just allocate as many as the size of struct dirent. */
-    len = sizeof (struct dirent);
-#endif
 
     struct dirent *buf = malloc (len);
     if (unlikely(buf == NULL))
@@ -219,7 +211,7 @@ char *vlc_readdir( DIR *dir )
         errno = val;
     else if (ent != NULL)
 #ifndef __APPLE__
-        path = FromLocaleDup (ent->d_name);
+        path = strdup (ent->d_name);
 #else
         path = FromCharset ("UTF-8-MAC", ent->d_name, strlen (ent->d_name));
 #endif

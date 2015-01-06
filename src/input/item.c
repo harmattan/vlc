@@ -25,7 +25,6 @@
 # include "config.h"
 #endif
 #include <assert.h>
-#include <time.h>
 
 #include <vlc_common.h>
 #include <vlc_url.h>

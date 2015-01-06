@@ -41,7 +41,6 @@
 #include <QMenu>
 #include <QSignalMapper>
 #include <QSlider>
-#include <QStackedWidget>
 
 /**********************************************************************
  * Playlist Widget. The embedded playlist
@@ -68,13 +67,16 @@ PlaylistWidget::PlaylistWidget( intf_thread_t *_p_i, QWidget *_par )
 
     /* Create a Container for the Art Label
        in order to have a beautiful resizing for the selector above it */
-    artContainer = new QStackedWidget;
+    QWidget *artContainer = new QWidget;
+    QHBoxLayout *artContLay = new QHBoxLayout( artContainer );
+    artContLay->setMargin( 0 );
+    artContLay->setSpacing( 0 );
     artContainer->setMaximumHeight( 128 );
 
     /* Art label */
     CoverArtLabel *art = new CoverArtLabel( artContainer, p_intf );
     art->setToolTip( qtr( "Double click to get media information" ) );
-    artContainer->addWidget( art );
+    artContLay->addWidget( art, 1 );
 
     CONNECT( THEMIM->getIM(), artChanged( QString ),
              art, showArtUpdate( const QString& ) );
@@ -92,7 +94,7 @@ PlaylistWidget::PlaylistWidget( intf_thread_t *_p_i, QWidget *_par )
 
     setMinimumWidth( 400 );
 
-    PLModel *model = PLModel::getPLModel( p_intf );
+    PLModel *model = new PLModel( p_playlist, p_intf, p_root, this );
 #ifdef MEDIA_LIBRARY
     MLModel *mlmodel = new MLModel( p_intf, this );
     mainView = new StandardPLPanel( this, p_intf, p_root, selector, model, mlmodel );
@@ -157,10 +159,19 @@ PlaylistWidget::PlaylistWidget( intf_thread_t *_p_i, QWidget *_par )
     CONNECT( mainView, viewChanged( const QModelIndex& ),
              this, changeView( const QModelIndex &) );
 
+    /* Zoom */
+    QSlider *zoomSlider = new QSlider( Qt::Horizontal, this );
+    zoomSlider->setRange( -10, 10);
+    zoomSlider->setPageStep( 3 );
+    zoomSlider->setValue( model->getZoom() );
+    zoomSlider->setToolTip( qtr("Zoom playlist") );
+    CONNECT( zoomSlider, valueChanged( int ), model, changeZoom( int ) );
+    topbarLayout->addWidget( zoomSlider );
+
     /* Connect the activation of the selector to a redefining of the PL */
     DCONNECT( selector, categoryActivated( playlist_item_t *, bool ),
-              mainView, setRootItem( playlist_item_t *, bool ) );
-    mainView->setRootItem( p_root, false );
+              mainView, setRoot( playlist_item_t *, bool ) );
+    mainView->setRoot( p_root, false );
 
     /* */
     split = new PlaylistSplitter( this );

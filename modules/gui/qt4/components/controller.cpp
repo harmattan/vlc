@@ -659,8 +659,16 @@ void ControlsWidget::toggleAdvanced()
 {
     if( !advControls ) return;
 
-    advControls->setVisible( !b_advancedVisible );
-    b_advancedVisible = !b_advancedVisible;
+    if( !b_advancedVisible )
+    {
+        advControls->show();
+        b_advancedVisible = true;
+    }
+    else
+    {
+        advControls->hide();
+        b_advancedVisible = false;
+    }
     emit advancedControlsToggled( b_advancedVisible );
 }
 

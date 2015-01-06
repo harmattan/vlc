@@ -1,30 +1,17 @@
 CLEANFILES = skins2/default.vlt
 MOSTLYCLEANFILES =
-EXTRA_DIST =
 
-appdatadir = $(datadir)/applications
-if !HAVE_WIN32
-if !HAVE_WINCE
-appdata_DATA = vlc.desktop
-endif
-endif
-EXTRA_DIST += vlc.desktop.in
-CLEANFILES += $(appdata_DATA)
+appdatadir = $(datadir)/applications/
 
-vlc.desktop: vlc.desktop.in $(top_builddir)/config.status
-	$(AM_V_GEN)sed -e 's,\@bindir\@,$(bindir),g' < "$<" > tmp-$@
-	$(AM_V_at)$(DESKTOP_FILE_VALIDATE) tmp-$@
-	$(AM_V_at)mv -f tmp-$@ $@
+iconsdatadir = $(datadir)/icons/hicolor/
+icons16dir = $(iconsdatadir)/16x16/apps/
+icons32dir = $(iconsdatadir)/32x32/apps/
+icons48dir = $(iconsdatadir)/48x48/apps/
+icons128dir = $(iconsdatadir)/128x128/apps/
+icons256dir = $(iconsdatadir)/256x256/apps/
 
-iconsdatadir = $(datadir)/icons/hicolor
-icons16dir = $(iconsdatadir)/16x16/apps
-icons32dir = $(iconsdatadir)/32x32/apps
-icons48dir = $(iconsdatadir)/48x48/apps
-icons128dir = $(iconsdatadir)/128x128/apps
-icons256dir = $(iconsdatadir)/256x256/apps
+dist_appdata_DATA = vlc.desktop
 
-if !HAVE_WIN32
-if !HAVE_WINCE
 dist_vlcdata_DATA = icons/vlc.ico
 dist_icons16_DATA = icons/16x16/vlc.png icons/16x16/vlc.xpm
 dist_icons32_DATA = icons/32x32/vlc.png icons/32x32/vlc.xpm \
@@ -38,10 +25,8 @@ nobase_dist_vlcdata_SCRIPTS = \
 	utils/audio-vlc-default.sh \
 	utils/video-vlc-default.sh \
 	$(NULL)
-endif
-endif
 
-EXTRA_DIST += \
+EXTRA_DIST = \
 	$(skins2_default_vlt_FILES) \
 	$(DIST_rsrc) \
 	$(DIST_skins2) \
@@ -164,7 +149,6 @@ nobase_vlclib_DATA = \
 	lua/meta/art/01_googleimage.luac \
 	lua/meta/fetcher/tvrage.luac \
 	lua/meta/reader/filename.luac \
-	lua/modules/dkjson.luac \
 	lua/modules/sandbox.luac \
 	lua/modules/simplexml.luac \
 	lua/playlist/anevia_streams.luac \
@@ -231,7 +215,6 @@ EXTRA_DIST += \
 	lua/meta/fetcher/tvrage.lua \
 	lua/meta/reader/README.txt \
 	lua/meta/reader/filename.lua \
-	lua/modules/dkjson.lua \
 	lua/modules/sandbox.lua \
 	lua/modules/simplexml.lua \
 	lua/playlist/README.txt \

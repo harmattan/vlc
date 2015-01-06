@@ -13,34 +13,22 @@ Examples:
  space -> +
  ...
 
-
-Deprecation Notice:
----
-The entire interface is moving to using <MRL> for input and output parameters and attributes
-pl_play and in_enqueue previously accepted paths. This is still supported, but from 1.3 <MRL> will be required
-where path attributes are provided in output, these should be ignored in favour of uri attributes
-path support is scheduled to be removed entirely from 1.3
----
-
-
 status.xml or status.json
 ===========
-
-
 < Get VLC status information, current item info and meta.
 < Get VLC version, and http api version
 
-> add <uri> to playlist and start playback:
-  ?command=in_play&input=<uri>&option=<option>
+> add <mrl> to playlist and start playback:
+  ?command=in_play&input=<mrl>&option=<option>
   the option field is optional, and can have the values:
     noaudio
     novideo
 
-> add <uri> to playlist:
-  ?command=in_enqueue&input=<uri>
+> add <mrl> to playlist:
+  ?command=in_enqueue&input=<mrl>
 
 > add subtitle to currently playing file
-  ?command=addsubtitle&val=<uri>
+  ?command=addsubtitle&val=<path>
 
 > play playlist item <id>. If <id> is omitted, play last active item:
   ?command=pl_play&id=<id>

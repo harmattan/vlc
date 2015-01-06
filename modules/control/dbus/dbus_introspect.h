@@ -65,7 +65,6 @@ static const char* psz_introspection_xml =
 "    <property name=\"CanQuit\" type=\"b\" access=\"read\" />\n"
 "    <property name=\"CanRaise\" type=\"b\" access=\"read\" />\n"
 "    <method name=\"Quit\" />\n"
-"    <method name=\"Raise\" />\n"
 "  </interface>\n"
 "  <interface name=\"org.mpris.MediaPlayer2.Player\">\n"
 "    <property name=\"Metadata\" type=\"a{sv}\" access=\"read\" />\n"

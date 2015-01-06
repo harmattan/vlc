@@ -28,36 +28,6 @@
 #   error "No Video4Linux2 headers found."
 #endif
 
-/* Hacks to compile with old headers */
-#ifndef V4L2_CTRL_FLAG_VOLATILE /* 3.2 */
-# warning Please update Video4Linux2 headers!
-# define V4L2_CTRL_FLAG_VOLATILE 0x0080
-#endif
-#ifdef __linux__
-# include <linux/version.h>
-# if LINUX_VERSION_CODE < KERNEL_VERSION(3,1,0)
-#  define V4L2_CTRL_TYPE_BITMASK 8
-# endif
-#endif
-#ifndef V4L2_CID_ILLUMINATORS_1 /* 2.6.37 */
-# define V4L2_CID_ILLUMINATORS_1 (V4L2_CID_BASE+38)
-# define V4L2_CID_ILLUMINATORS_2 (V4L2_CID_BASE+37)
-#endif
-#ifndef V4L2_CID_CHROMA_GAIN /* 2.6.35 */
-# define V4L2_CID_CHROMA_GAIN (V4L2_CID_BASE+36)
-# define V4L2_COLORFX_VIVID 9
-# define V4L2_COLORFX_SKIN_WHITEN 8
-# define V4L2_COLORFX_GRASS_GREEN 7
-# define V4L2_COLORFX_SKY_BLUE 6
-# define V4L2_COLORFX_SKETCH 5
-# define V4L2_COLORFX_EMBOSS 4
-# define V4L2_COLORFX_NEGATIVE 3
-#endif
-#ifndef V4L2_CID_ROTATE /* 2.6.33 */
-# define V4L2_CID_BG_COLOR (V4L2_CID_BASE+35)
-# define V4L2_CID_ROTATE (V4L2_CID_BASE+34)
-#endif
-
 #ifdef HAVE_LIBV4L2
 #   include <libv4l2.h>
 #else
@@ -71,6 +41,8 @@
 
 #define CFG_PREFIX "v4l2-"
 
+int ControlList(vlc_object_t *, int fd, bool b_demux);
+
 /* TODO: remove this, use callbacks */
 typedef enum {
     IO_METHOD_READ=1,
@@ -78,9 +50,7 @@ typedef enum {
     IO_METHOD_USERPTR,
 } io_method;
 
-typedef struct vlc_v4l2_ctrl vlc_v4l2_ctrl_t;
-
-/* TODO: move this to access.c and demux.c (separately) */
+/* TODO: move this to .c */
 struct demux_sys_t
 {
     int  i_fd;
@@ -96,8 +66,6 @@ struct demux_sys_t
     uint32_t i_block_flags;
 
     es_out_id_t *p_es;
-
-    vlc_v4l2_ctrl_t *controls;
 
 #ifdef HAVE_LIBV4L2
     bool b_libv4l2;
@@ -125,7 +93,3 @@ void GetMaxDimensions(vlc_object_t *, int fd, uint32_t fmt, float fps_min,
 /* access.c */
 int AccessOpen(vlc_object_t *);
 void AccessClose(vlc_object_t *);
-
-/* controls.c */
-vlc_v4l2_ctrl_t *ControlsInit(vlc_object_t *, int fd);
-void ControlsDeinit(vlc_object_t *, vlc_v4l2_ctrl_t *);

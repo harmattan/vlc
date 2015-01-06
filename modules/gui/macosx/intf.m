@@ -1,7 +1,7 @@
 /*****************************************************************************
  * intf.m: MacOS X interface module
  *****************************************************************************
- * Copyright (C) 2002-2011 VLC authors and VideoLAN
+ * Copyright (C) 2002-2011 the VideoLAN team
  * $Id$
  *
  * Authors: Jon Lech Johansen <jon-vl@nanocrew.net>
@@ -557,8 +557,8 @@ static VLCMain *_o_sharedMainInstance = nil;
 
     val.b_bool = false;
 
-    var_AddCallback(p_playlist, "fullscreen", FullscreenChanged, self);
-    var_AddCallback( p_intf->p_libvlc, "intf-toggle-fscontrol", ShowController, self);
+    var_AddCallback( p_playlist, "fullscreen", FullscreenChanged, self);
+    var_AddCallback( p_intf->p_libvlc, "intf-show", ShowController, self);
 //    var_AddCallback(p_playlist, "item-change", PLItemChanged, self);
     var_AddCallback(p_playlist, "item-current", PLItemChanged, self);
     var_AddCallback(p_playlist, "activity", PLItemChanged, self);
@@ -701,8 +701,6 @@ static VLCMain *_o_sharedMainInstance = nil;
     var_DelCallback(p_playlist, "loop", PlaybackModeUpdated, self);
     var_DelCallback(p_playlist, "volume", VolumeUpdated, self);
     var_DelCallback(p_playlist, "mute", VolumeUpdated, self);
-    var_DelCallback(p_playlist, "fullscreen", FullscreenChanged, self);
-    var_DelCallback(p_intf->p_libvlc, "intf-toggle-fscontrol", ShowController, self);
 
     /* remove global observer watching for vout device changes correctly */
     [[NSNotificationCenter defaultCenter] removeObserver: self];
@@ -1097,7 +1095,6 @@ static struct
     { NSCarriageReturnCharacter, KEY_ENTER },
     { NSEnterCharacter, KEY_ENTER },
     { NSBackspaceCharacter, KEY_BACKSPACE },
-    { NSDeleteCharacter, KEY_DELETE },
     {0,0}
 };
 
@@ -1133,24 +1130,12 @@ unsigned int CocoaKeyToVLC( unichar i_key )
 - (NSString *)VLCKeyToString:(NSString *)theString
 {
     if (![theString isEqualToString:@""]) {
-        if ([theString characterAtIndex:([theString length] - 1)] != 0x2b)
-            theString = [theString stringByReplacingOccurrencesOfString:@"+" withString:@""];
-        else
-        {
-            theString = [theString stringByReplacingOccurrencesOfString:@"+" withString:@""];
-            theString = [NSString stringWithFormat:@"%@+", theString];
-        }
-        if ([theString characterAtIndex:([theString length] - 1)] != 0x2d)
-            theString = [theString stringByReplacingOccurrencesOfString:@"-" withString:@""];
-        else
-        {
-            theString = [theString stringByReplacingOccurrencesOfString:@"-" withString:@""];
-            theString = [NSString stringWithFormat:@"%@-", theString];
-        }
         theString = [theString stringByReplacingOccurrencesOfString:@"Command" withString:@""];
         theString = [theString stringByReplacingOccurrencesOfString:@"Alt" withString:@""];
         theString = [theString stringByReplacingOccurrencesOfString:@"Shift" withString:@""];
         theString = [theString stringByReplacingOccurrencesOfString:@"Ctrl" withString:@""];
+        theString = [theString stringByReplacingOccurrencesOfString:@"+" withString:@""];
+        theString = [theString stringByReplacingOccurrencesOfString:@"-" withString:@""];
     }
     if ([theString length] > 1)
     {
@@ -1162,51 +1147,6 @@ unsigned int CocoaKeyToVLC( unichar i_key )
             return [NSString stringWithFormat:@"%C", NSRightArrowFunctionKey];
         else if([theString rangeOfString:@"Left"].location != NSNotFound)
             return [NSString stringWithFormat:@"%C", NSLeftArrowFunctionKey];
-        else if([theString rangeOfString:@"Enter"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSEnterCharacter]; // we treat NSCarriageReturnCharacter as aquivalent
-        else if([theString rangeOfString:@"Insert"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSInsertFunctionKey];
-        else if([theString rangeOfString:@"Home"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSHomeFunctionKey];
-        else if([theString rangeOfString:@"End"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSEndFunctionKey];
-        else if([theString rangeOfString:@"Pageup"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSPageUpFunctionKey];
-        else if([theString rangeOfString:@"Pagedown"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSPageDownFunctionKey];
-        else if([theString rangeOfString:@"Menu"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSMenuFunctionKey];
-        else if([theString rangeOfString:@"Tab"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSTabCharacter];
-        else if([theString rangeOfString:@"Backspace"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSBackspaceCharacter];
-        else if([theString rangeOfString:@"Delete"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSDeleteCharacter];
-        else if([theString rangeOfString:@"F12"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSF12FunctionKey];
-        else if([theString rangeOfString:@"F11"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSF11FunctionKey];
-        else if([theString rangeOfString:@"F10"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSF10FunctionKey];
-        else if([theString rangeOfString:@"F9"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSF9FunctionKey];
-        else if([theString rangeOfString:@"F8"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSF8FunctionKey];
-        else if([theString rangeOfString:@"F7"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSF7FunctionKey];
-        else if([theString rangeOfString:@"F6"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSF6FunctionKey];
-        else if([theString rangeOfString:@"F5"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSF5FunctionKey];
-        else if([theString rangeOfString:@"F4"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSF4FunctionKey];
-        else if([theString rangeOfString:@"F3"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSF3FunctionKey];
-        else if([theString rangeOfString:@"F2"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSF2FunctionKey];
-        else if([theString rangeOfString:@"F1"].location != NSNotFound)
-            return [NSString stringWithFormat:@"%C", NSF1FunctionKey];
-        /* note that we don't support esc here, since it is reserved for leaving fullscreen */
     }
 
     return theString;
@@ -1440,10 +1380,7 @@ unsigned int CocoaKeyToVLC( unichar i_key )
         else
         {
             if (state == END_S)
-            {
-                var_DelCallback( p_input, "intf-event", InputEvent, [VLCMain sharedInstance] );
                 [o_mainmenu setSubmenusEnabled: FALSE];
-            }
             [[self mainMenu] setPlay];
             [o_mainwindow setPlay];
         }

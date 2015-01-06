@@ -937,7 +937,7 @@ static const char *const ppsz_prefres[] = {
 
 #define RTSP_PORT_TEXT N_( "RTSP server port" )
 #define RTSP_PORT_LONGTEXT N_( \
-    "The RTSP server will listen on this TCP port. " \
+    "The HTTPS server will listen on this TCP port. " \
     "The standard RTSP port number is 554. " \
     "However allocation of port numbers below 1025 is usually restricted " \
     "by the operating system." )
@@ -1483,7 +1483,6 @@ static const char *const ppsz_albumart_descriptions[] =
 #define SCALE_DOWN_KEY_LONGTEXT N_("Decrease scale factor.")
 #define DEINTERLACE_KEY_TEXT N_("Cycle deinterlace modes")
 #define DEINTERLACE_KEY_LONGTEXT N_("Cycle through deinterlace modes.")
-#define INTF_TOGGLE_FSC_KEY_TEXT N_("Show controller in fullscreen")
 #define INTF_SHOW_KEY_TEXT N_("Show interface")
 #define INTF_SHOW_KEY_LONGTEXT N_("Raise the interface above all other windows.")
 #define INTF_HIDE_KEY_TEXT N_("Hide interface")
@@ -1645,6 +1644,9 @@ vlc_module_begin ()
         change_safe ()
     add_bool( "embedded-video", 1, EMBEDDED_TEXT, EMBEDDED_LONGTEXT,
               true )
+#ifdef __APPLE__
+       add_deprecated_alias( "macosx-embedded" ) /*deprecated since 0.9.0 */
+#endif
     add_bool( "xlib", true, "", "", true )
         change_private ()
     add_bool( "drop-late-frames", 1, DROP_LATE_FRAMES_TEXT,
@@ -1668,6 +1670,9 @@ vlc_module_begin ()
               VIDEO_ON_TOP_LONGTEXT, false )
     add_bool( "video-wallpaper", false, WALLPAPER_TEXT,
               WALLPAPER_LONGTEXT, false )
+#ifdef WIN32
+        add_deprecated_alias( "directx-wallpaper" )
+#endif
     add_bool( "disable-screensaver", true, SS_TEXT, SS_LONGTEXT,
               true )
 
@@ -1751,7 +1756,7 @@ vlc_module_begin ()
                 VIDEO_FILTER_TEXT, VIDEO_FILTER_LONGTEXT, false )
     add_module_list_cat( "video-splitter", SUBCAT_VIDEO_VFILTER, NULL,
                         VIDEO_SPLITTER_TEXT, VIDEO_SPLITTER_LONGTEXT, false )
-    add_obsolete_string( "vout-filter" ) /* since 1.2.0 */
+    add_deprecated_alias( "vout-filter" )
 #if 0
     add_string( "pixel-ratio", "1", PIXEL_RATIO_TEXT, PIXEL_RATIO_TEXT )
 #endif
@@ -1880,13 +1885,13 @@ vlc_module_begin ()
     add_integer( "rtsp-port", 8554, RTSP_PORT_TEXT, RTSP_PORT_LONGTEXT, true )
         change_integer_range( 1, 65535 )
     add_loadfile( "http-cert", NULL, HTTP_CERT_TEXT, CERT_LONGTEXT, true )
-    add_obsolete_string( "sout-http-cert" ) /* since 1.2.0 */
+        add_deprecated_alias( "sout-http-cert" ) /* since 1.2.0 */
     add_loadfile( "http-key", NULL, HTTP_KEY_TEXT, KEY_LONGTEXT, true )
-    add_obsolete_string( "sout-http-key" ) /* since 1.2.0 */
+        add_deprecated_alias( "sout-http-key" ) /* since 1.2.0 */
     add_loadfile( "http-ca", NULL, HTTP_CA_TEXT, CA_LONGTEXT, true )
-    add_obsolete_string( "sout-http-ca" ) /* since 1.2.0 */
+        add_deprecated_alias( "sout-http-ca" ) /* since 1.2.0 */
     add_loadfile( "http-crl", NULL, HTTP_CRL_TEXT, CRL_LONGTEXT, true )
-    add_obsolete_string( "sout-http-crl" ) /* since 1.2.0 */
+        add_deprecated_alias( "sout-http-crl" ) /* since 1.2.0 */
 
     set_section( N_( "Socks proxy") , NULL )
     add_string( "socks", NULL,
@@ -1929,48 +1934,25 @@ vlc_module_begin ()
                  CACHING_TEXT, CACHING_LONGTEXT, true )
         change_integer_range( 0, 60000 )
         change_safe()
-    add_obsolete_integer( "vdr-caching" ) /* 1.2.0 */
     add_integer( "live-caching", DEFAULT_PTS_DELAY / 1000,
                  CAPTURE_CACHING_TEXT, CAPTURE_CACHING_LONGTEXT, true )
         change_integer_range( 0, 60000 )
         change_safe()
-    add_obsolete_integer( "alsa-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "dshow-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "dv-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "dvb-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "eyetv-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "gnomevfs-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "jack-input-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "linsys-hdsdi-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "linsys-sdi-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "oss-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "pvr-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "screen-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "v4l2-caching" ) /* 1.2.0 */
+#if defined (__linux__)
+        add_deprecated_alias( "v4l2-caching" ) /* 1.2.0 */
+#elif defined (WIN32)
+        add_deprecated_alias( "dshow-caching" ) /* 1.2.0 */
+#endif
     add_integer( "disc-caching", DEFAULT_PTS_DELAY / 1000,
                  DISC_CACHING_TEXT, DISC_CACHING_LONGTEXT, true )
         change_integer_range( 0, 60000 )
         change_safe()
-    add_obsolete_integer( "bd-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "bluray-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "cdda-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "dvdnav-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "dvdread-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "vcd-caching" ) /* 1.2.0 */
+        add_deprecated_alias( "dvdnav-caching" ) /* 1.2.0 */
     add_integer( "network-caching", CLOCK_FREQ / 1000,
                  NETWORK_CACHING_TEXT, NETWORK_CACHING_LONGTEXT, true )
         change_integer_range( 0, 60000 )
         change_safe()
-    add_obsolete_integer( "ftp-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "http-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "mms-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "realrtsp-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "rtp-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "rtsp-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "sftp-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "smb-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "tcp-caching" ) /* 1.2.0 */
-    add_obsolete_integer( "udp-caching" ) /* 1.2.0 */
+        add_deprecated_alias( "http-caching" ) /* 1.2.0 */
 
     add_integer( "cr-average", 40, CR_AVERAGE_TEXT,
                  CR_AVERAGE_LONGTEXT, true )
@@ -2131,7 +2113,7 @@ vlc_module_begin ()
               PLAYLISTENQUEUE_LONGTEXT, true )
 #endif
 
-#if defined(WIN32) || defined(__OS2__)
+#if defined(WIN32)
     add_bool( "high-priority", 0, HPRIORITY_TEXT,
               HPRIORITY_LONGTEXT, false )
 #endif
@@ -2188,7 +2170,7 @@ vlc_module_begin ()
     add_bool( "quiet", 0, QUIET_TEXT, QUIET_LONGTEXT, false )
         change_short('q')
 
-#if !defined(WIN32) && !defined(__OS2__)
+#if !defined(WIN32)
     add_bool( "daemon", 0, DAEMON_TEXT, DAEMON_LONGTEXT, true )
         change_short('d')
 
@@ -2312,7 +2294,8 @@ vlc_module_begin ()
 #   define KEY_SCALE_UP           "Alt+o"
 #   define KEY_SCALE_DOWN         "Shift+Alt+o"
 #   define KEY_DEINTERLACE        "d"
-#   define KEY_INTF_TOGGLE_FSC    "i"
+#   define KEY_INTF_SHOW          "i"
+#   define KEY_INTF_HIDE          "Shift+i"
 #   define KEY_INTF_BOSS          NULL
 #   define KEY_DISC_MENU          "Ctrl+m"
 #   define KEY_TITLE_PREV         "Ctrl+p"
@@ -2429,7 +2412,8 @@ vlc_module_begin ()
 #   define KEY_SCALE_UP           "Alt+o"
 #   define KEY_SCALE_DOWN         "Alt+Shift+o"
 #   define KEY_DEINTERLACE        "d"
-#   define KEY_INTF_TOGGLE_FSC    "i"
+#   define KEY_INTF_SHOW          "i"
+#   define KEY_INTF_HIDE          "Shift+i"
 #   define KEY_INTF_BOSS          NULL
 #   define KEY_DISC_MENU          "Shift+m"
 #   define KEY_TITLE_PREV         "Shift+o"
@@ -2496,6 +2480,7 @@ vlc_module_begin ()
 
     add_key( "key-toggle-fullscreen", KEY_TOGGLE_FULLSCREEN, TOGGLE_FULLSCREEN_KEY_TEXT,
              TOGGLE_FULLSCREEN_KEY_LONGTEXT, false )
+       add_deprecated_alias( "key-fullscreen" ) /*deprecated since 0.9.0 */
     add_key( "key-leave-fullscreen", KEY_LEAVE_FULLSCREEN, LEAVE_FULLSCREEN_KEY_TEXT,
              LEAVE_FULLSCREEN_KEY_LONGTEXT, false )
     add_key( "key-play-pause", KEY_PLAY_PAUSE, PLAY_PAUSE_KEY_TEXT,
@@ -2599,10 +2584,10 @@ vlc_module_begin ()
              SCALE_DOWN_KEY_TEXT, SCALE_DOWN_KEY_LONGTEXT, false )
     add_key( "key-deinterlace", KEY_DEINTERLACE,
              DEINTERLACE_KEY_TEXT, DEINTERLACE_KEY_LONGTEXT, false )
-    add_key( "key-intf-show", KEY_INTF_TOGGLE_FSC,
-             INTF_TOGGLE_FSC_KEY_TEXT, INTF_TOGGLE_FSC_KEY_TEXT, false )
-    add_obsolete_inner( "key-intf-hide", CONFIG_ITEM_KEY )
-
+    add_key( "key-intf-show", KEY_INTF_SHOW,
+             INTF_SHOW_KEY_TEXT, INTF_SHOW_KEY_LONGTEXT, true )
+    add_key( "key-intf-hide", KEY_INTF_HIDE,
+             INTF_HIDE_KEY_TEXT, INTF_HIDE_KEY_LONGTEXT, true )
     add_key( "key-intf-boss", KEY_INTF_BOSS,
              INTF_BOSS_KEY_TEXT, INTF_BOSS_KEY_LONGTEXT, true )
     add_key( "key-snapshot", KEY_SNAPSHOT,

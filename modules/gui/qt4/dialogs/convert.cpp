@@ -102,10 +102,8 @@ ConvertDialog::ConvertDialog( QWidget *parent, intf_thread_t *_p_intf,
 
     mainLayout->addWidget( buttonBox, 5, 3 );
 
-    BUTTONACT(okButton,close());
-    BUTTONACT(cancelButton,cancel());
-
-    CONNECT(dumpBox,toggled(bool),this,dumpChecked(bool));
+    BUTTONACT( okButton, close() );
+    BUTTONACT( cancelButton, cancel() );
 }
 
 void ConvertDialog::fileBrowse()
@@ -150,9 +148,3 @@ void ConvertDialog::close()
     accept();
 }
 
-void ConvertDialog::dumpChecked( bool checked )
-{
-    deinterBox->setEnabled( !checked );
-    displayBox->setEnabled( !checked );
-    profile->setEnabled( !checked );
-}

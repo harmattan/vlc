@@ -5,20 +5,20 @@
 /*****************************************************************************
  * Copyright © 2009 Rémi Denis-Courmont
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * (at your option) any later version.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
+ * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
- *****************************************************************************/
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ ****************************************************************************/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -53,7 +53,7 @@ vlc_module_begin ()
     set_subcategory (SUBCAT_PLAYLIST_SD)
     set_capability ("services_discovery", 0)
     set_callbacks (OpenV4L, Close)
-    add_shortcut ("v4l", "video")
+    add_shortcut ("v4l")
 #ifdef HAVE_ALSA
     add_submodule ()
     set_shortname (N_("Audio capture"))
@@ -62,7 +62,7 @@ vlc_module_begin ()
     set_subcategory (SUBCAT_PLAYLIST_SD)
     set_capability ("services_discovery", 0)
     set_callbacks (OpenALSA, Close)
-    add_shortcut ("alsa", "audio")
+    add_shortcut ("alsa")
 #endif
     add_submodule ()
     set_shortname (N_("Discs"))
@@ -398,26 +398,18 @@ static char *decode_property (struct udev_device *dev, const char *name)
 
 
 /*** Video4Linux support ***/
-static bool v4l_is_legacy (struct udev_device *dev)
+static bool is_v4l_legacy (struct udev_device *dev)
 {
     const char *version;
 
     version = udev_device_get_property_value (dev, "ID_V4L_VERSION");
-    return (version != NULL) && !strcmp (version, "1");
-}
-
-static bool v4l_can_capture (struct udev_device *dev)
-{
-    const char *caps;
-
-    caps = udev_device_get_property_value (dev, "ID_V4L_CAPABILITIES");
-    return (caps != NULL) && (strstr (caps, ":capture:") != NULL);
+    return version && !strcmp (version, "1");
 }
 
 static char *v4l_get_mrl (struct udev_device *dev)
 {
     /* Determine media location */
-    if (v4l_is_legacy (dev) || !v4l_can_capture (dev))
+    if (is_v4l_legacy (dev))
         return NULL;
 
     const char *node = udev_device_get_devnode (dev);

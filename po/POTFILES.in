@@ -226,7 +226,6 @@ modules/access/mms/mmstu.c
 modules/access/mms/mmstu.h
 modules/access/mtp.c
 modules/access/oss.c
-modules/access/pulse.c
 modules/access/pvr.c
 modules/access/qtcapture.m
 modules/access/rar/access.c
@@ -301,12 +300,10 @@ modules/audio_filter/converter/format.c
 modules/audio_filter/converter/mpgatofixed32.c
 modules/audio_filter/equalizer.c
 modules/audio_filter/equalizer_presets.h
-modules/audio_filter/karaoke.c
 modules/audio_filter/normvol.c
 modules/audio_filter/param_eq.c
 modules/audio_filter/resampler/bandlimited.c
 modules/audio_filter/resampler/bandlimited.h
-modules/audio_filter/resampler/speex.c
 modules/audio_filter/resampler/src.c
 modules/audio_filter/resampler/ugly.c
 modules/audio_filter/scaletempo.c
@@ -329,7 +326,6 @@ modules/audio_output/auhal.c
 modules/audio_output/directx.c
 modules/audio_output/file.c
 modules/audio_output/jack.c
-modules/audio_output/kai.c
 modules/audio_output/oss.c
 modules/audio_output/portaudio.c
 modules/audio_output/pulse.c
@@ -973,7 +969,6 @@ modules/services_discovery/bonjour.c
 modules/services_discovery/mediadirs.c
 modules/services_discovery/mtp.c
 modules/services_discovery/podcast.c
-modules/services_discovery/pulse.c
 modules/services_discovery/sap.c
 modules/services_discovery/udev.c
 modules/services_discovery/upnp.cpp
@@ -981,7 +976,6 @@ modules/services_discovery/windrive.c
 modules/services_discovery/xcb_apps.c
 modules/stream_filter/decomp.c
 modules/stream_filter/record.c
-modules/stream_filter/dash/dash.cpp
 modules/stream_out/autodel.c
 modules/stream_out/bridge.c
 modules/stream_out/delay.c
@@ -1138,40 +1132,3 @@ modules/visualization/visual/fft.c
 modules/visualization/visual/fft.h
 modules/visualization/visual/visual.c
 modules/visualization/visual/visual.h
-share/lua/http/index.html
-share/lua/http/dialogs/batch_window.html
-share/lua/http/dialogs/browse_window.html
-share/lua/http/dialogs/create_stream.html
-share/lua/http/dialogs/equalizer_window.html
-share/lua/http/dialogs/error_window.html
-share/lua/http/dialogs/mosaic_window.html
-share/lua/http/dialogs/offset_window.html
-share/lua/http/dialogs/stream_config_window.html
-share/lua/http/dialogs/stream_window.html
-share/lua/http/mobile_browse.html
-share/lua/http/mobile_equalizer.html
-share/lua/http/mobile.html
-share/lua/http/mobile_view.html
-
-# Qt4 .ui files
-# uncomment (and prepend $builddir} if you want to generate a proper vlc.pot 
-
-#modules/gui/qt4/ui/about.h
-#modules/gui/qt4/ui/equalizer.h
-#modules/gui/qt4/ui/messages_panel.h
-#modules/gui/qt4/ui/open.h
-#modules/gui/qt4/ui/open_capture.h
-#modules/gui/qt4/ui/open_disk.h
-#modules/gui/qt4/ui/open_file.h
-#modules/gui/qt4/ui/open_net.h
-#modules/gui/qt4/ui/podcast_configuration.h
-#modules/gui/qt4/ui/profiles.h
-#modules/gui/qt4/ui/sout.h
-#modules/gui/qt4/ui/sprefs_audio.h
-#modules/gui/qt4/ui/sprefs_input.h
-#modules/gui/qt4/ui/sprefs_interface.h
-#modules/gui/qt4/ui/sprefs_subtitles.h
-#modules/gui/qt4/ui/sprefs_video.h
-#modules/gui/qt4/ui/streampanel.h
-#modules/gui/qt4/ui/video_effects.h
-#modules/gui/qt4/ui/vlm.h

@@ -87,7 +87,7 @@ void revmodel::mute()
  * /param long numsamples  number of samples to be processed
  * /param int skip             number of channels in the audio stream
  *****************************************************************************/
-void revmodel::processreplace(float *inputL, float *outputL, long /* numsamples */, int skip)
+void revmodel::processreplace(float *inputL, float *outputL, long numsamples, int skip)
 {
     float outL,outR,input;
     float inputR;
@@ -121,10 +121,11 @@ void revmodel::processreplace(float *inputL, float *outputL, long /* numsamples 
         outputL[1] = (outR*wet1 + outL*wet2 + inputR*dry);
 }
 
-void revmodel::processmix(float *inputL, float *outputL, long /* numsamples */, int skip)
+void revmodel::processmix(float *inputL, float *outputL, long numsamples, int skip)
 {
     float outL,outR,input;
     float inputR;
+    int i;
 
     outL = outR = 0;
         if (skip > 1)
@@ -134,14 +135,14 @@ void revmodel::processmix(float *inputL, float *outputL, long /* numsamples */, 
         input = (inputL[0] + inputR) * gain;
 
         // Accumulate comb filters in parallel
-        for(int i=0; i<numcombs; i++)
+        for(i=0; i<numcombs; i++)
         {
             outL += combL[i].process(input);
             outR += combR[i].process(input);
         }
 
         // Feed through allpasses in series
-        for(int i=0; i<numallpasses; i++)
+        for(i=0; i<numallpasses; i++)
         {
             outL = allpassL[i].process(outL);
             outR = allpassR[i].process(outR);
@@ -156,6 +157,8 @@ void revmodel::processmix(float *inputL, float *outputL, long /* numsamples */, 
 void revmodel::update()
 {
 // Recalculate internal values after parameter change
+
+    int i;
 
     wet1 = wet*(width/2 + 0.5f);
     wet2 = wet*((1-width)/2);
@@ -173,13 +176,13 @@ void revmodel::update()
         gain = fixedgain;
     }
 
-    for(int i=0; i<numcombs; i++)
+    for(i=0; i<numcombs; i++)
     {
         combL[i].setfeedback(roomsize1);
         combR[i].setfeedback(roomsize1);
     }
 
-    for(int i=0; i<numcombs; i++)
+    for(i=0; i<numcombs; i++)
     {
         combL[i].setdamp(damp1);
         combR[i].setdamp(damp1);

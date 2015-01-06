@@ -59,6 +59,8 @@
 #   include <ctype.h>
 #   include <shlwapi.h>
 #   include <vlc_charset.h>
+#elif defined( __OS2__ )
+#   include <ctype.h>
 #else
 #   include <unistd.h>
 #endif
@@ -84,7 +86,7 @@ struct access_sys_t
     bool b_pace_control;
 };
 
-#if !defined (WIN32) && !defined (__OS2__)
+#ifndef WIN32
 static bool IsRemote (int fd)
 {
 #if defined (HAVE_FSTATVFS) && defined (MNT_LOCAL)
@@ -121,10 +123,10 @@ static bool IsRemote (int fd)
 }
 # define IsRemote(fd,path) IsRemote(fd)
 
-#else /* WIN32 || __OS2__ */
+#else /* WIN32 */
 static bool IsRemote (const char *path)
 {
-# if !defined(UNDER_CE) && !defined(__OS2__)
+# ifndef UNDER_CE
     wchar_t *wpath = ToWide (path);
     bool is_remote = (wpath != NULL && PathIsNetworkPathW (wpath));
     free (wpath);

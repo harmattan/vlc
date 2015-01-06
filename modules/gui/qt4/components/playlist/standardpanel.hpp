@@ -102,7 +102,7 @@ private:
     bool eventFilter ( QObject * watched, QEvent * event );
 
 public slots:
-    void setRootItem( playlist_item_t *, bool );
+    void setRoot( playlist_item_t *, bool );
     void browseInto( const QModelIndex& );
 
 private slots:

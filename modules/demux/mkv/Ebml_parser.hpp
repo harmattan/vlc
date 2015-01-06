@@ -34,7 +34,7 @@ class EbmlParser
 {
   public:
     EbmlParser( EbmlStream *es, EbmlElement *el_start, demux_t *p_demux );
-    ~EbmlParser( void );
+    virtual ~EbmlParser( void );
 
     void Up( void );
     void Down( void );
@@ -43,10 +43,10 @@ class EbmlParser
     void        Keep( void );
     EbmlElement *UnGet( uint64 i_block_pos, uint64 i_cluster_pos );
 
-    int  GetLevel( void ) const;
+    int  GetLevel( void );
 
     /* Is the provided element presents in our upper elements */
-    bool IsTopPresent( EbmlElement * ) const;
+    bool IsTopPresent( EbmlElement * );
 
   private:
     EbmlStream  *m_es;

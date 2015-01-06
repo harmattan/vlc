@@ -3,19 +3,19 @@
  *****************************************************************************
  * Copyright (C) 2008 Rémi Denis-Courmont
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -46,7 +46,6 @@ struct vlc_inhibit_sys
     vlc_thread_t thread;
     vlc_cond_t update, inactive;
     vlc_mutex_t lock;
-    posix_spawnattr_t attr;
     bool suspend, suspended;
 };
 
@@ -66,18 +65,6 @@ static int Open (vlc_object_t *obj)
     vlc_mutex_init (&p_sys->lock);
     vlc_cond_init (&p_sys->update);
     vlc_cond_init (&p_sys->inactive);
-    posix_spawnattr_init (&p_sys->attr);
-    /* Reset signal handlers to default and clear mask in the child process */
-    {
-        sigset_t set;
-
-        sigemptyset (&set);
-        posix_spawnattr_setsigmask (&p_sys->attr, &set);
-        sigaddset (&set, SIGPIPE);
-        posix_spawnattr_setsigdefault (&p_sys->attr, &set);
-        posix_spawnattr_setflags (&p_sys->attr, POSIX_SPAWN_SETSIGDEF
-                                              | POSIX_SPAWN_SETSIGMASK);
-    }
     p_sys->suspend = false;
     p_sys->suspended = false;
 
@@ -105,7 +92,6 @@ static void Close (vlc_object_t *obj)
 
     vlc_cancel (p_sys->thread);
     vlc_join (p_sys->thread, NULL);
-    posix_spawnattr_destroy (&p_sys->attr);
     vlc_cond_destroy (&p_sys->inactive);
     vlc_cond_destroy (&p_sys->update);
     vlc_mutex_destroy (&p_sys->lock);
@@ -152,8 +138,7 @@ static void *Thread (void *data)
         pid_t pid;
 
         vlc_mutex_unlock (&p_sys->lock);
-        if (!posix_spawnp (&pid, "xdg-screensaver", NULL, &p_sys->attr,
-                           argv, environ))
+        if (!posix_spawnp (&pid, "xdg-screensaver", NULL, NULL, argv, environ))
         {
             int status;
 

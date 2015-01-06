@@ -32,10 +32,6 @@
 #include <sys/stat.h>
 #include <assert.h>
 #include <errno.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
 #include "vlc_block.h"
 
 /**

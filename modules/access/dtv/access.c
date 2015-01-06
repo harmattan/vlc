@@ -5,20 +5,20 @@
 /*****************************************************************************
  * Copyright © 2011 Rémi Denis-Courmont
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * (at your option) any later version.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
+ * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
- *****************************************************************************/
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ ****************************************************************************/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -233,16 +233,19 @@ vlc_module_begin ()
                   "satellite", "dvb-s", "dvb-s2", "isdb-s",
                   "terrestrial", "dvb-t", "dvb-t2", "isdb-t", "atsc")
 
+    /* All options starting with dvb- can be overridden in the MRL, so they
+     * must all be "safe". Nevertheless, we do not mark as safe those that are
+     * really specific to the local system (e.g. device ID...).
+     * It wouldn't make sense to deliver those through a playlist. */
+
 #ifdef __linux__
     add_integer ("dvb-adapter", 0, ADAPTER_TEXT, ADAPTER_LONGTEXT, false)
         change_integer_range (0, 255)
-        change_safe ()
     add_obsolete_integer ("dvb-device")
     add_bool ("dvb-budget-mode", false, BUDGET_TEXT, BUDGET_LONGTEXT, true)
 #endif
 #ifdef WIN32
     add_integer ("dvb-adapter", -1, ADAPTER_TEXT, ADAPTER_LONGTEXT, true)
-        change_safe ()
     add_string ("dvb-network-name", "", NAME_TEXT, NAME_LONGTEXT, true)
     /* Hmm: is this one really safe??: */
     add_string ("dvb-create-name", "", CREATE_TEXT, CREATE_LONGTEXT, true)
@@ -361,14 +364,14 @@ vlc_module_begin ()
 #endif
     add_integer ("dvb-lnb-low", 0, LNB_LOW_TEXT, LNB_LONGTEXT, true)
         change_integer_range (0, 0x7fffffff)
-    add_obsolete_integer ("dvb-lnb-lof1") /* since 1.2.0 */
+        add_deprecated_alias ("dvb-lnb-lof1")
     add_integer ("dvb-lnb-high", 0, LNB_HIGH_TEXT, LNB_LONGTEXT, true)
         change_integer_range (0, 0x7fffffff)
-    add_obsolete_integer ("dvb-lnb-lof2") /* since 1.2.0 */
+        add_deprecated_alias ("dvb-lnb-lof2")
     add_integer ("dvb-lnb-switch", 11700000,
                  LNB_SWITCH_TEXT, LNB_SWITCH_LONGTEXT, true)
         change_integer_range (0, 0x7fffffff)
-    add_obsolete_integer ("dvb-lnb-slof") /* since 1.2.0 */
+        add_deprecated_alias ("dvb-lnb-slof")
 #ifdef __linux__
     add_integer ("dvb-satno", 0, SATNO_TEXT, SATNO_LONGTEXT, true)
         change_integer_list (satno_vlc, satno_user)

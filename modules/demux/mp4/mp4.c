@@ -708,7 +708,7 @@ static int Demux( demux_t *p_demux )
                     if( tk->fmt.i_codec == VLC_FOURCC( 's', 'u', 'b', 't' ) &&
                         p_block->i_buffer >= 2 )
                     {
-                        size_t i_size = GetWBE( p_block->p_buffer );
+                        uint16_t i_size = GetWBE( p_block->p_buffer );
 
                         if( i_size + 2 <= p_block->i_buffer )
                         {
@@ -1506,7 +1506,6 @@ static int TrackCreateES( demux_t *p_demux, mp4_track_t *p_track,
     MP4_Box_t   *p_esds;
     MP4_Box_t   *p_frma;
     MP4_Box_t   *p_enda;
-    MP4_Box_t   *p_pasp;
 
     if( pp_es )
         *pp_es = NULL;
@@ -1541,8 +1540,6 @@ static int TrackCreateES( demux_t *p_demux, mp4_track_t *p_track,
     p_enda = MP4_BoxGet( p_sample, "wave/enda" );
     if( !p_enda )
         p_enda = MP4_BoxGet( p_sample, "enda" );
-
-    p_pasp = MP4_BoxGet( p_sample, "pasp" );
 
     if( p_track->fmt.i_cat == AUDIO_ES && ( p_track->i_sample_size == 1 || p_track->i_sample_size == 2 ) )
     {
@@ -1642,12 +1639,6 @@ static int TrackCreateES( demux_t *p_demux, mp4_track_t *p_track,
         {
             p_track->fmt.video.i_sar_num = p_track->i_width  * p_track->fmt.video.i_height;
             p_track->fmt.video.i_sar_den = p_track->i_height * p_track->fmt.video.i_width;
-        }
-        if( p_pasp && p_pasp->data.p_pasp->i_horizontal_spacing > 0 &&
-                      p_pasp->data.p_pasp->i_vertical_spacing > 0 )
-        {
-            p_track->fmt.video.i_sar_num = p_pasp->data.p_pasp->i_horizontal_spacing;
-            p_track->fmt.video.i_sar_den = p_pasp->data.p_pasp->i_vertical_spacing;
         }
 
         /* Support for cropping (eg. in H263 files) */
@@ -2656,7 +2647,7 @@ static uint64_t MP4_TrackGetPos( mp4_track_t *p_track )
         MP4_Box_data_sample_soun_t *p_soun =
             p_track->p_sample->data.p_sample_soun;
 
-        if( p_track->fmt.i_cat != AUDIO_ES || p_soun->i_qt_version == 0 )
+        if( p_soun->i_qt_version == 0 )
         {
             i_pos += ( p_track->i_sample -
                        p_track->chunk[p_track->i_chunk].i_sample_first ) *

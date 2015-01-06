@@ -70,9 +70,6 @@ static int IntfShowCB( vlc_object_t *p_this, const char *psz_variable,
                        vlc_value_t old_val, vlc_value_t new_val, void *param );
 static int IntfBossCB( vlc_object_t *p_this, const char *psz_variable,
                        vlc_value_t old_val, vlc_value_t new_val, void *param );
-static int IntfRaiseMainCB( vlc_object_t *p_this, const char *psz_variable,
-                           vlc_value_t old_val, vlc_value_t new_val,
-                           void *param );
 
 MainInterface::MainInterface( intf_thread_t *_p_intf ) : QVLCMW( _p_intf )
 {
@@ -81,7 +78,9 @@ MainInterface::MainInterface( intf_thread_t *_p_intf ) : QVLCMW( _p_intf )
     videoWidget          = NULL;
     playlistWidget       = NULL;
     stackCentralOldWidget= NULL;
+#ifndef HAVE_MAEMO
     sysTray              = NULL;
+#endif
     fullscreenControls   = NULL;
     cryptedLabel         = NULL;
     controls             = NULL;
@@ -91,7 +90,6 @@ MainInterface::MainInterface( intf_thread_t *_p_intf ) : QVLCMW( _p_intf )
     playlistVisible      = false;
     input_name           = "";
     b_interfaceFullScreen= false;
-    b_hasPausedWhenMinimized = false;
 
 
     /* Ask for Privacy */
@@ -128,6 +126,7 @@ MainInterface::MainInterface( intf_thread_t *_p_intf ) : QVLCMW( _p_intf )
 
     /* Set the other interface settings */
     settings = getSettings();
+    settings->beginGroup( "MainWindow" );
 
 #ifdef WIN32
     /* Volume keys */
@@ -135,8 +134,9 @@ MainInterface::MainInterface( intf_thread_t *_p_intf ) : QVLCMW( _p_intf )
 #endif
 
     /* */
-    b_plDocked = getSettings()->value( "MainWindow/pl-dock-status", true ).toBool();
+    b_plDocked = getSettings()->value( "pl-dock-status", true ).toBool();
 
+    settings->endGroup( );
 
     /**************************
      *  UI and Widgets design
@@ -221,7 +221,6 @@ MainInterface::MainInterface( intf_thread_t *_p_intf ) : QVLCMW( _p_intf )
     CONNECT( this, askToQuit(), THEDP, quit() );
 
     CONNECT( this, askBoss(), this, setBoss() );
-    CONNECT( this, askRaise(), this, setRaise() );
 
     /** END of CONNECTS**/
 
@@ -229,22 +228,25 @@ MainInterface::MainInterface( intf_thread_t *_p_intf ) : QVLCMW( _p_intf )
     /************
      * Callbacks
      ************/
-    var_AddCallback( p_intf->p_libvlc, "intf-toggle-fscontrol", IntfShowCB, p_intf );
+    var_AddCallback( p_intf->p_libvlc, "intf-show", IntfShowCB, p_intf );
     var_AddCallback( p_intf->p_libvlc, "intf-boss", IntfBossCB, p_intf );
-    var_AddCallback( p_intf->p_libvlc, "intf-show", IntfRaiseMainCB, p_intf );
 
     /* Register callback for the intf-popupmenu variable */
     var_AddCallback( p_intf->p_libvlc, "intf-popupmenu", PopupMenuCB, p_intf );
 
+    /* Playlist */
+    int i_plVis = settings->value( "MainWindow/playlist-visible", false ).toBool();
 
-    /* Final Sizing, restoration and placement of the interface */
-    if( settings->value( "MainWindow/playlist-visible", false ).toBool() )
-        togglePlaylist();
+    if( i_plVis ) togglePlaylist();
 
+    /**** FINAL SIZING and placement of interface */
+    settings->beginGroup( "MainWindow" );
     QVLCTools::restoreWidgetPosition( settings, this, QSize(600, 420) );
+    settings->endGroup();
 
     b_interfaceFullScreen = isFullScreen();
 
+    /* Final sizing and showing */
     setVisible( !b_hideAfterCreation );
 
     computeMinimumSize();
@@ -252,6 +254,8 @@ MainInterface::MainInterface( intf_thread_t *_p_intf ) : QVLCMW( _p_intf )
     /* Switch to minimal view if needed, must be called after the show() */
     if( b_minimalView )
         toggleMinimalView( true );
+
+    b_hasPausedWhenMinimized = false;
 }
 
 MainInterface::~MainInterface()
@@ -281,8 +285,8 @@ MainInterface::~MainInterface()
     delete fullscreenControls;
 
     /* Save states */
+    settings->beginGroup( "MainWindow" );
 
-    settings->beginGroup("MainWindow");
     settings->setValue( "pl-dock-status", b_plDocked );
     /* Save playlist state */
     if( playlistWidget )
@@ -295,10 +299,11 @@ MainInterface::~MainInterface()
     /* Save the stackCentralW sizes */
     settings->setValue( "bgSize", stackWidgetsSizes[bgWidget] );
     settings->setValue( "playlistSize", stackWidgetsSizes[playlistWidget] );
-    settings->endGroup();
 
     /* Save this size */
     QVLCTools::saveWidgetPosition(settings, this);
+
+    settings->endGroup();
 
     /* Save undocked playlist size */
     if( playlistWidget && !isPlDocked() )
@@ -310,8 +315,7 @@ MainInterface::~MainInterface()
 
     /* Unregister callbacks */
     var_DelCallback( p_intf->p_libvlc, "intf-boss", IntfBossCB, p_intf );
-    var_DelCallback( p_intf->p_libvlc, "intf-show", IntfRaiseMainCB, p_intf );
-    var_DelCallback( p_intf->p_libvlc, "intf-toggle-fscontrol", IntfShowCB, p_intf );
+    var_DelCallback( p_intf->p_libvlc, "intf-show", IntfShowCB, p_intf );
     var_DelCallback( p_intf->p_libvlc, "intf-popupmenu", PopupMenuCB, p_intf );
 
     p_intf->p_sys->p_mi = NULL;
@@ -333,14 +337,12 @@ void MainInterface::recreateToolbars()
 {
     bool b_adv = getControlsVisibilityStatus() & CONTROLS_ADVANCED;
 
+    settings->beginGroup( "MainWindow" );
     delete controls;
     delete inputC;
 
     controls = new ControlsWidget( p_intf, b_adv, this );
     inputC = new InputControlsWidget( p_intf, this );
-    mainLayout->insertWidget( 2, inputC );
-    mainLayout->insertWidget( settings->value( "MainWindow/ToolbarPos", 0 ).toInt() ? 0: 3,
-                              controls );
 
     if( fullscreenControls )
     {
@@ -349,6 +351,10 @@ void MainInterface::recreateToolbars()
         CONNECT( fullscreenControls, keyPressed( QKeyEvent * ),
                  this, handleKeyPress( QKeyEvent * ) );
     }
+    mainLayout->insertWidget( 2, inputC );
+    mainLayout->insertWidget( settings->value( "ToolbarPos", 0 ).toInt() ? 0: 3,
+                              controls );
+    settings->endGroup();
 }
 
 void MainInterface::reloadPrefs()
@@ -394,13 +400,14 @@ void MainInterface::createMainWidget( QSettings *settings )
     }
     mainLayout->insertWidget( 1, stackCentralW );
 
-    stackWidgetsSizes[bgWidget] = settings->value( "MainWindow/bgSize", QSize( 600, 0 ) ).toSize();
+    settings->beginGroup( "MainWindow" );
+    stackWidgetsSizes[bgWidget] = settings->value( "bgSize", QSize( 600, 0 ) ).toSize();
     /* Resize even if no-auto-resize, because we are at creation */
     resizeStack( stackWidgetsSizes[bgWidget].width(), stackWidgetsSizes[bgWidget].height() );
 
     /* Create the CONTROLS Widget */
     controls = new ControlsWidget( p_intf,
-                   settings->value( "MainWindow/adv-controls", false ).toBool(), this );
+                   settings->value( "adv-controls", false ).toBool(), this );
     inputC = new InputControlsWidget( p_intf, this );
 
     mainLayout->insertWidget( 2, inputC );
@@ -414,6 +421,7 @@ void MainInterface::createMainWidget( QSettings *settings )
     visualSelector->hide();
     #endif
 
+    settings->endGroup();
 
     /* Enable the popup menu in the MI */
     main->setContextMenuPolicy( Qt::CustomContextMenu );
@@ -432,6 +440,7 @@ void MainInterface::createMainWidget( QSettings *settings )
 
 inline void MainInterface::initSystray()
 {
+#ifndef HAVE_MAEMO
     bool b_systrayAvailable = QSystemTrayIcon::isSystemTrayAvailable();
     bool b_systrayWanted = var_InheritBool( p_intf, "qt-system-tray" );
 
@@ -448,6 +457,7 @@ inline void MainInterface::initSystray()
 
     if( b_systrayAvailable && b_systrayWanted )
         createSystray();
+#endif
 }
 
 inline void MainInterface::createStatusBar()
@@ -531,25 +541,6 @@ inline void MainInterface::showTab( QWidget *widget )
     stackCentralOldWidget = stackCentralW->currentWidget();
     stackWidgetsSizes[stackCentralOldWidget] = stackCentralW->size();
 
-    /* If we are playing video, embedded */
-    if( videoWidget && THEMIM->getIM()->hasVideo() )
-    {
-        /* Video -> Playlist */
-        if( videoWidget == stackCentralOldWidget && widget == playlistWidget )
-        {
-            stackCentralW->removeWidget( videoWidget );
-            videoWidget->show(); videoWidget->raise();
-        }
-
-        /* Playlist -> Video */
-        if( playlistWidget == stackCentralOldWidget && widget == videoWidget )
-        {
-            playlistWidget->artContainer->removeWidget( videoWidget );
-            videoWidget->show(); videoWidget->raise();
-            stackCentralW->addWidget( videoWidget );
-        }
-    }
-
     stackCentralW->setCurrentWidget( widget );
     if( b_autoresize )
         resizeStack( stackWidgetsSizes[widget].width(), stackWidgetsSizes[widget].height() );
@@ -558,14 +549,6 @@ inline void MainInterface::showTab( QWidget *widget )
     msg_Warn( p_intf, "State change %i",  stackCentralW->currentIndex() );
     msg_Warn( p_intf, "New stackCentralOldWidget %i", stackCentralW->indexOf( stackCentralOldWidget ) );
 #endif
-
-    /* This part is done later, to account for the new pl size */
-    if( videoWidget && THEMIM->getIM()->hasVideo() &&
-        videoWidget == stackCentralOldWidget && widget == playlistWidget )
-    {
-        playlistWidget->artContainer->addWidget( videoWidget );
-        playlistWidget->artContainer->setCurrentWidget( videoWidget );
-    }
 }
 
 void MainInterface::destroyPopupMenu()
@@ -651,12 +634,6 @@ void MainInterface::releaseVideoSlot( void )
 
     if( stackCentralW->currentWidget() == videoWidget )
         restoreStackOldWidget();
-    else if( playlistWidget &&
-             playlistWidget->artContainer->currentWidget() == videoWidget )
-    {
-        playlistWidget->artContainer->setCurrentIndex( 0 );
-        stackCentralW->addWidget( videoWidget );
-    }
 
     /* We don't want to have a blank video to popup */
     stackCentralOldWidget = bgWidget;
@@ -977,6 +954,7 @@ void MainInterface::showBuffering( float f_cache )
 /*****************************************************************************
  * Systray Icon and Systray Menu
  *****************************************************************************/
+#ifndef HAVE_MAEMO
 /**
  * Create a SystemTray icon and a menu that would go with it.
  * Connects to a click handler on the icon.
@@ -1143,6 +1121,7 @@ void MainInterface::updateSystrayTooltipStatus( int i_status )
     }
     QVLCMenu::updateSystrayMenu( this, p_intf );
 }
+#endif
 
 void MainInterface::changeEvent(QEvent *event)
 {
@@ -1308,24 +1287,16 @@ void MainInterface::emitBoss()
 void MainInterface::setBoss()
 {
     THEMIM->pause();
+#ifndef HAVE_MAEMO
     if( sysTray )
     {
         hide();
     }
     else
+#endif
     {
         showMinimized();
     }
-}
-
-void MainInterface::emitRaise()
-{
-    emit askRaise();
-}
-void MainInterface::setRaise()
-{
-    activateWindow();
-    raise();
 }
 
 /*****************************************************************************
@@ -1350,7 +1321,7 @@ static int PopupMenuCB( vlc_object_t *p_this, const char *psz_variable,
 }
 
 /*****************************************************************************
- * IntfShowCB: callback triggered by the intf-toggle-fscontrol libvlc variable.
+ * IntfShowCB: callback triggered by the intf-show libvlc variable.
  *****************************************************************************/
 static int IntfShowCB( vlc_object_t *p_this, const char *psz_variable,
                        vlc_value_t old_val, vlc_value_t new_val, void *param )
@@ -1363,21 +1334,6 @@ static int IntfShowCB( vlc_object_t *p_this, const char *psz_variable,
 
     /* Show event */
      return VLC_SUCCESS;
-}
-
-/*****************************************************************************
- * IntfRaiseMainCB: callback triggered by the intf-show-main libvlc variable.
- *****************************************************************************/
-static int IntfRaiseMainCB( vlc_object_t *p_this, const char *psz_variable,
-                       vlc_value_t old_val, vlc_value_t new_val, void *param )
-{
-    VLC_UNUSED( p_this ); VLC_UNUSED( psz_variable ); VLC_UNUSED( old_val );
-    VLC_UNUSED( new_val );
-
-    intf_thread_t *p_intf = (intf_thread_t *)param;
-    p_intf->p_sys->p_mi->emitRaise();
-
-    return VLC_SUCCESS;
 }
 
 /*****************************************************************************

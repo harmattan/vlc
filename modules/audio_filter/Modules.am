@@ -1,6 +1,5 @@
 SOURCES_equalizer = equalizer.c equalizer_presets.h
 SOURCES_compressor = compressor.c
-SOURCES_karaoke = karaoke.c
 SOURCES_normvol = normvol.c
 SOURCES_audiobargraph_a = audiobargraph_a.c
 SOURCES_param_eq = param_eq.c
@@ -19,7 +18,6 @@ libvlc_LTLIBRARIES += \
 	libchorus_flanger_plugin.la \
 	libcompressor_plugin.la \
 	libequalizer_plugin.la \
-	libkaraoke_plugin.la \
 	libnormvol_plugin.la \
 	libparam_eq_plugin.la \
 	libscaletempo_plugin.la \
@@ -64,11 +62,3 @@ libvlc_LTLIBRARIES += \
 	libugly_resampler_plugin.la
 EXTRA_LTLIBRARIES += \
 	libbandlimited_resampler_plugin.la
-
-libspeex_resampler_plugin_la_SOURCES = resampler/speex.c
-libspeex_resampler_plugin_la_CFLAGS = $(AM_CFLAGS) $(SPEEXDSP_CFLAGS)
-libspeex_resampler_plugin_la_LIBADD = $(AM_LIBADD) $(SPEEXDSP_LIBS)
-libspeex_resampler_plugin_la_DEPENDENCIES =
-if HAVE_SPEEXDSP
-libvlc_LTLIBRARIES += libspeex_resampler_plugin.la
-endif

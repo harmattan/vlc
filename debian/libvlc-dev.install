@@ -1,0 +1,5 @@
+usr/include/vlc/*.h
+usr/include/vlc/plugins/*.h
+usr/lib/lib*.so
+usr/lib/pkgconfig/*.pc
+usr/lib/vlc/lib*.so

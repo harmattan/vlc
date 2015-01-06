@@ -28,7 +28,6 @@
 # include "config.h"
 #endif
 #include <assert.h>
-#include <ctype.h>
 
 #include <vlc_common.h>
 #include <vlc_plugin.h>
@@ -95,8 +94,6 @@ static char *FromACP( const char *str )
 {
     return FromCharset(vlc_pgettext("GetACP", "CP1252"), str, strlen(str));
 }
-
-#define IGNORE_ES NAV_ES
 
 typedef struct
 {
@@ -1954,9 +1951,6 @@ static void AVI_ParseStreamHeader( vlc_fourcc_t i_id,
             case AVITWOCC_sb:
                 SET_PTR( pi_type, SPU_ES );
                 break;
-            case AVITWOCC_pc:
-                SET_PTR( pi_type, IGNORE_ES );
-                break;
             default:
                 SET_PTR( pi_type, UNKNOWN_ES );
                 break;
@@ -2152,35 +2146,18 @@ static int AVI_IndexFind_idx1( demux_t *p_demux,
     }
     *pp_idx1 = p_idx1;
 
-    /* The offset in the index should be from the start of the movi content,
-     * but some broken files use offset from the start of the file. Just
-     * checking the offset of the first packet is not enough as some files
-     * has unused chunk at the beginning of the movi content.
-     */
+    /* *** calculate offset *** */
+    /* Well, avi is __SHIT__ so test more than one entry
+     * (needed for some avi files) */
     avi_chunk_list_t *p_movi = AVI_ChunkFind( p_riff, AVIFOURCC_movi, 0);
-    uint64_t i_first_pos = UINT64_MAX;
-    for( unsigned i = 0; i < __MIN( p_idx1->i_entry_count, 100 ); i++ )
-        i_first_pos = __MIN( i_first_pos, p_idx1->entry[i].i_pos );
-
-    const uint64_t i_movi_content = p_movi->i_chunk_pos + 8;
-    if( i_first_pos < i_movi_content )
+    *pi_offset = 0;
+    for( unsigned i = 0; i < __MIN( p_idx1->i_entry_count, 10 ); i++ )
     {
-        *pi_offset = i_movi_content;
-    }
-    else if( p_sys->b_seekable && i_first_pos < UINT64_MAX )
-    {
-        const uint8_t *p_peek;
-        if( !stream_Seek( p_demux->s, i_movi_content + i_first_pos ) &&
-            stream_Peek( p_demux->s, &p_peek, 4 ) >= 4 &&
-            ( !isdigit( p_peek[0] ) || !isdigit( p_peek[1] ) ||
-              !isalpha( p_peek[2] ) || !isalpha( p_peek[3] ) ) )
-            *pi_offset = 0;
-        else
-            *pi_offset = i_movi_content;
-    }
-    else
-    {
-        *pi_offset = 0;
+        if( p_idx1->entry[i].i_pos < p_movi->i_chunk_pos )
+        {
+            *pi_offset = p_movi->i_chunk_pos + 8;
+            break;
+        }
     }
     return VLC_SUCCESS;
 }
@@ -2204,7 +2181,7 @@ static int AVI_IndexLoad_idx1( demux_t *p_demux,
                                &i_stream,
                                &i_cat );
         if( i_stream < p_sys->i_track &&
-            (i_cat == p_sys->track[i_stream]->i_cat || i_cat == UNKNOWN_ES ) )
+            i_cat == p_sys->track[i_stream]->i_cat )
         {
             avi_entry_t index;
             index.i_id     = p_idx1->entry[i_index].i_fourcc;

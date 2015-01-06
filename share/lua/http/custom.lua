@@ -1,6 +1,3 @@
--- make xgettext fetch strings from html code
-function gettext(text) print(vlc.gettext._(text)) end
-
 local _G = _G
 module("custom",package.seeall)
 

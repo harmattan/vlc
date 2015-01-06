@@ -88,110 +88,82 @@
     "Force usage of the libv4l2 wrapper." )
 #endif
 
-#define CTRL_RESET_TEXT N_( "Reset controls" )
-#define CTRL_RESET_LONGTEXT N_( "Reset controls to defaults." )
+#define CTRL_RESET_TEXT N_( "Reset v4l2 controls" )
+#define CTRL_RESET_LONGTEXT N_( \
+    "Reset controls to defaults provided by the v4l2 driver." )
 #define BRIGHTNESS_TEXT N_( "Brightness" )
-#define BRIGHTNESS_LONGTEXT N_( "Picture brightness or black level." )
-#define BRIGHTNESS_AUTO_TEXT N_( "Automatic brightness" )
-#define BRIGHTNESS_AUTO_LONGTEXT N_( \
-    "Automatically adjust the picture brightness." )
+#define BRIGHTNESS_LONGTEXT N_( \
+    "Brightness of the video input (if supported by the v4l2 driver)." )
 #define CONTRAST_TEXT N_( "Contrast" )
-#define CONTRAST_LONGTEXT N_( "Picture contrast or luma gain." )
+#define CONTRAST_LONGTEXT N_( \
+    "Contrast of the video input (if supported by the v4l2 driver)." )
 #define SATURATION_TEXT N_( "Saturation" )
-#define SATURATION_LONGTEXT N_( "Picture saturation or chroma gain." )
+#define SATURATION_LONGTEXT N_( \
+    "Saturation of the video input (if supported by the v4l2 driver)." )
 #define HUE_TEXT N_( "Hue" )
-#define HUE_LONGTEXT N_( "Hue or color balance." )
-#define HUE_AUTO_TEXT N_( "Automatic hue" )
-#define HUE_AUTO_LONGTEXT N_( \
-    "Automatically adjust the picture hue." )
-#define WHITE_BALANCE_TEMP_TEXT N_( "White balance temperature (K)" )
-#define WHITE_BALANCE_TEMP_LONGTEXT N_( \
-    "White balance temperature as a color temperation in Kelvin " \
-    "(2800 is minimum incandescence, 6500 is maximum daylight)." )
-#define AUTOWHITEBALANCE_TEXT N_( "Automatic white balance" )
+#define HUE_LONGTEXT N_( \
+    "Hue of the video input (if supported by the v4l2 driver)." )
+#define BLACKLEVEL_TEXT N_( "Black level" )
+#define BLACKLEVEL_LONGTEXT N_( \
+    "Black level of the video input (if supported by the v4l2 driver)." )
+#define AUTOWHITEBALANCE_TEXT N_( "Auto white balance" )
 #define AUTOWHITEBALANCE_LONGTEXT N_( \
-    "Automatically adjust the picture white balance." )
+    "Automatically set the white balance of the video input " \
+    "(if supported by the v4l2 driver)." )
+#define DOWHITEBALANCE_TEXT N_( "Do white balance" )
+#define DOWHITEBALANCE_LONGTEXT N_( \
+    "Trigger a white balancing action, useless if auto white balance is " \
+    "activated (if supported by the v4l2 driver)." )
 #define REDBALANCE_TEXT N_( "Red balance" )
 #define REDBALANCE_LONGTEXT N_( \
-    "Red chroma balance." )
+    "Red balance of the video input (if supported by the v4l2 driver)." )
 #define BLUEBALANCE_TEXT N_( "Blue balance" )
 #define BLUEBALANCE_LONGTEXT N_( \
-    "Blue chroma balance." )
+    "Blue balance of the video input (if supported by the v4l2 driver)." )
 #define GAMMA_TEXT N_( "Gamma" )
 #define GAMMA_LONGTEXT N_( \
-    "Gamma adjust." )
-#define AUTOGAIN_TEXT N_( "Automatic gain" )
+    "Gamma of the video input (if supported by the v4l2 driver)." )
+#define EXPOSURE_TEXT N_( "Exposure" )
+#define EXPOSURE_LONGTEXT N_( \
+    "Exposure of the video input (if supported by the v4L2 driver)." )
+#define AUTOGAIN_TEXT N_( "Auto gain" )
 #define AUTOGAIN_LONGTEXT N_( \
-    "Automatically set the video gain." )
+    "Automatically set the video input's gain (if supported by the " \
+    "v4l2 driver)." )
 #define GAIN_TEXT N_( "Gain" )
 #define GAIN_LONGTEXT N_( \
-    "Picture gain." )
-#define SHARPNESS_TEXT N_( "Sharpness" )
-#define SHARPNESS_LONGTEXT N_( "Sharpness filter adjust." )
-#define CHROMA_GAIN_TEXT N_( "Chroma gain" )
-#define CHROMA_GAIN_LONGTEXT N_( "Chroma gain control." )
-#define CHROMA_GAIN_AUTO_TEXT N_( "Automatic chroma gain" )
-#define CHROMA_GAIN_AUTO_LONGTEXT N_( \
-    "Automatically control the chroma gain." )
-#define POWER_FREQ_TEXT N_( "Power line frequency" )
-#define POWER_FREQ_LONGTEXT N_( \
-    "Power line frequency anti-flicker filter." )
-static const int power_freq_vlc[] = { -1,
-    V4L2_CID_POWER_LINE_FREQUENCY_DISABLED,
-    V4L2_CID_POWER_LINE_FREQUENCY_50HZ,
-    V4L2_CID_POWER_LINE_FREQUENCY_60HZ,
-};
-static const char *const power_freq_user[] = { N_("Unspecified"),
-    N_("Off"), N_("50 Hz"), N_("60 Hz"),
-};
-#define BKLT_COMPENSATE_TEXT N_( "Backlight compensation" )
-#define BKLT_COMPENSATE_LONGTEXT N_( "Backlight compensation." )
-#define BAND_STOP_FILTER_TEXT N_( "Band-stop filter" )
-#define BAND_STOP_FILTER_LONGTEXT N_(  \
-    "Cut a light band induced by fluorescent lighting (unit undocumented)." )
+    "Video input's gain (if supported by the v4l2 driver)." )
 #define HFLIP_TEXT N_( "Horizontal flip" )
 #define HFLIP_LONGTEXT N_( \
-    "Flip the picture horizontally." )
+    "Flip the video horizontally (if supported by the v4l2 driver)." )
 #define VFLIP_TEXT N_( "Vertical flip" )
 #define VFLIP_LONGTEXT N_( \
-    "Flip the picture vertically." )
-#define ROTATE_TEXT N_( "Rotate (degrees)" )
-#define ROTATE_LONGTEXT N_( "Picture rotation angle (in degrees)." )
-#define COLOR_KILLER_TEXT N_( "Color killer" )
-#define COLOR_KILLER_LONGTEXT N_( \
-    "Enable the color killer, i.e. switch to black & white picture " \
-    "whenever the signal is weak." )
-#define COLOR_EFFECT_TEXT N_( "Color effect" )
-#define COLOR_EFFECT_LONGTEXT N_( "Select a color effect." )
-static const int colorfx_vlc[] = { -1, V4L2_COLORFX_NONE,
-    V4L2_COLORFX_BW, V4L2_COLORFX_SEPIA, V4L2_COLORFX_NEGATIVE,
-    V4L2_COLORFX_EMBOSS, V4L2_COLORFX_SKETCH, V4L2_COLORFX_SKY_BLUE,
-    V4L2_COLORFX_GRASS_GREEN, V4L2_COLORFX_SKIN_WHITEN, V4L2_COLORFX_VIVID,
-};
-static const char *const colorfx_user[] = { N_("Unspecified"), N_("None"),
-    N_("Black & white"), N_("Sepia"), N_("Negative"),
-    N_("Emboss"), N_("Sketch"), N_("Sky blue"),
-    N_("Grass green"), N_("Skin whithen"), N_("Vivid"),
-};
+    "Flip the video vertically (if supported by the v4l2 driver)." )
+#define HCENTER_TEXT N_( "Horizontal centering" )
+#define HCENTER_LONGTEXT N_( \
+    "Set the camera's horizontal centering (if supported by the v4l2 driver)." )
+#define VCENTER_TEXT N_( "Vertical centering" )
+#define VCENTER_LONGTEXT N_( \
+    "Set the camera's vertical centering (if supported by the v4l2 driver)." )
 
-#define AUDIO_VOLUME_TEXT N_( "Audio volume" )
+#define AUDIO_VOLUME_TEXT N_( "Volume" )
 #define AUDIO_VOLUME_LONGTEXT N_( \
-    "Volume of the audio input." )
-#define AUDIO_BALANCE_TEXT N_( "Audio balance" )
+    "Volume of the audio input (if supported by the v4l2 driver)." )
+#define AUDIO_BALANCE_TEXT N_( "Balance" )
 #define AUDIO_BALANCE_LONGTEXT N_( \
-    "Balance of the audio input." )
-#define AUDIO_BASS_TEXT N_( "Bass level" )
-#define AUDIO_BASS_LONGTEXT N_( \
-    "Bass adjustment of the audio input." )
-#define AUDIO_TREBLE_TEXT N_( "Treble level" )
-#define AUDIO_TREBLE_LONGTEXT N_( \
-    "Treble adjustment of the audio input." )
+    "Balance of the audio input (if supported by the v4l2 driver)." )
 #define AUDIO_MUTE_TEXT N_( "Mute" )
 #define AUDIO_MUTE_LONGTEXT N_( \
-    "Mute the audio." )
-#define AUDIO_LOUDNESS_TEXT N_( "Loudness mode" )
+    "Mute audio input (if supported by the v4l2 driver)." )
+#define AUDIO_BASS_TEXT N_( "Bass" )
+#define AUDIO_BASS_LONGTEXT N_( \
+    "Bass level of the audio input (if supported by the v4l2 driver)." )
+#define AUDIO_TREBLE_TEXT N_( "Treble" )
+#define AUDIO_TREBLE_LONGTEXT N_( \
+    "Treble level of the audio input (if supported by the v4l2 driver)." )
+#define AUDIO_LOUDNESS_TEXT N_( "Loudness" )
 #define AUDIO_LOUDNESS_LONGTEXT N_( \
-    "Loudness mode a.k.a. bass boost." )
+    "Loudness of the audio input (if supported by the v4l2 driver)." )
 
 #define S_CTRLS_TEXT N_("v4l2 driver controls")
 #define S_CTRLS_LONGTEXT N_( \
@@ -213,10 +185,6 @@ static const char *const colorfx_user[] = { N_("Unspecified"), N_("None"),
 
 #define ASPECT_TEXT N_("Picture aspect-ratio n:m")
 #define ASPECT_LONGTEXT N_("Define input picture aspect-ratio to use. Default is 4:3" )
-
-static const int tristate_vlc[] = { -1, 0, 1 };
-static const char *const tristate_user[] = {
-    N_("Unspecified"), N_("Off"), N_("On") };
 
 static const v4l2_std_id standards_v4l2[] = { V4L2_STD_UNKNOWN, V4L2_STD_ALL,
     V4L2_STD_PAL,     V4L2_STD_PAL_BG,   V4L2_STD_PAL_DK,
@@ -356,70 +324,44 @@ vlc_module_begin ()
         change_safe()
 
     set_section( N_( "Controls" ),
-                 N_( "Video capture controls (if supported by the device)" ) )
+                 N_( "v4l2 driver controls, if supported by your v4l2 driver." ) )
     add_bool( CFG_PREFIX "controls-reset", false, CTRL_RESET_TEXT,
               CTRL_RESET_LONGTEXT, true )
         change_safe()
     add_integer( CFG_PREFIX "brightness", -1, BRIGHTNESS_TEXT,
                  BRIGHTNESS_LONGTEXT, true )
-    add_integer( CFG_PREFIX "brightness-auto", -1,
-                 BRIGHTNESS_AUTO_TEXT, BRIGHTNESS_AUTO_LONGTEXT, true )
-        change_integer_list( tristate_vlc, tristate_user )
     add_integer( CFG_PREFIX "contrast", -1, CONTRAST_TEXT,
                  CONTRAST_LONGTEXT, true )
     add_integer( CFG_PREFIX "saturation", -1, SATURATION_TEXT,
                  SATURATION_LONGTEXT, true )
     add_integer( CFG_PREFIX "hue", -1, HUE_TEXT,
                  HUE_LONGTEXT, true )
-    add_integer( CFG_PREFIX "hue-auto", -1,
-                 HUE_AUTO_TEXT, HUE_AUTO_LONGTEXT, true )
-        change_integer_list( tristate_vlc, tristate_user )
-    add_obsolete_integer( CFG_PREFIX "black-level" ) /* since Linux 2.6.26 */
-    add_integer( CFG_PREFIX "white-balance-temperature", -1,
-                 WHITE_BALANCE_TEMP_TEXT, WHITE_BALANCE_TEMP_LONGTEXT, true )
-        /* Ideally, the range should be 2800-6500 */
-        change_integer_range( -1, 6500 )
+    add_integer( CFG_PREFIX "black-level", -1, BLACKLEVEL_TEXT,
+                 BLACKLEVEL_LONGTEXT, true )
     add_integer( CFG_PREFIX "auto-white-balance", -1,
                  AUTOWHITEBALANCE_TEXT, AUTOWHITEBALANCE_LONGTEXT, true )
-        change_integer_list( tristate_vlc, tristate_user )
-    add_obsolete_integer( CFG_PREFIX"do-white-balance" ) /* since 1.2.0 */
+    add_integer( CFG_PREFIX "do-white-balance", -1, DOWHITEBALANCE_TEXT,
+                 DOWHITEBALANCE_LONGTEXT, true )
     add_integer( CFG_PREFIX "red-balance", -1, REDBALANCE_TEXT,
                  REDBALANCE_LONGTEXT, true )
     add_integer( CFG_PREFIX "blue-balance", -1, BLUEBALANCE_TEXT,
                  BLUEBALANCE_LONGTEXT, true )
     add_integer( CFG_PREFIX "gamma", -1, GAMMA_TEXT,
                  GAMMA_LONGTEXT, true )
+    add_integer( CFG_PREFIX "exposure", -1, EXPOSURE_TEXT,
+                 EXPOSURE_LONGTEXT, true )
     add_integer( CFG_PREFIX "autogain", -1, AUTOGAIN_TEXT,
                  AUTOGAIN_LONGTEXT, true )
-        change_integer_list( tristate_vlc, tristate_user )
     add_integer( CFG_PREFIX "gain", -1, GAIN_TEXT,
                  GAIN_LONGTEXT, true )
-    add_integer( CFG_PREFIX "sharpness", -1,
-                 SHARPNESS_TEXT, SHARPNESS_LONGTEXT, true )
-    add_integer( CFG_PREFIX "chroma-gain", -1,
-                 CHROMA_GAIN_TEXT, CHROMA_GAIN_LONGTEXT, true )
-    add_integer( CFG_PREFIX "chroma-gain-auto", -1,
-                 CHROMA_GAIN_AUTO_TEXT, CHROMA_GAIN_AUTO_LONGTEXT, true )
-    add_integer( CFG_PREFIX"power-line-frequency", -1,
-                 POWER_FREQ_TEXT, POWER_FREQ_LONGTEXT, true )
-        change_integer_list( power_freq_vlc, power_freq_user )
-    add_integer( CFG_PREFIX"backlight-compensation", -1,
-                 BKLT_COMPENSATE_TEXT, BKLT_COMPENSATE_LONGTEXT, true )
-    add_integer( CFG_PREFIX "band-stop-filter", -1,
-                 BAND_STOP_FILTER_TEXT, BAND_STOP_FILTER_LONGTEXT, true )
-    add_bool( CFG_PREFIX "hflip", false, HFLIP_TEXT, HFLIP_LONGTEXT, true )
-    add_bool( CFG_PREFIX "vflip", false, VFLIP_TEXT, VFLIP_LONGTEXT, true )
-    add_integer( CFG_PREFIX "rotate", -1, ROTATE_TEXT, ROTATE_LONGTEXT, true )
-        change_integer_range( -1, 359 )
-    add_obsolete_integer( CFG_PREFIX "hcenter" ) /* since Linux 2.6.26 */
-    add_obsolete_integer( CFG_PREFIX "vcenter" ) /* since Linux 2.6.26 */
-    add_integer( CFG_PREFIX"color-killer", -1,
-                 COLOR_KILLER_TEXT, COLOR_KILLER_LONGTEXT, true )
-        change_integer_list( tristate_vlc, tristate_user )
-    add_integer( CFG_PREFIX"color-effect", -1,
-                 COLOR_EFFECT_TEXT, COLOR_EFFECT_LONGTEXT, true )
-        change_integer_list( colorfx_vlc, colorfx_user )
-
+    add_integer( CFG_PREFIX "hflip", -1, HFLIP_TEXT,
+                 HFLIP_LONGTEXT, true )
+    add_integer( CFG_PREFIX "vflip", -1, VFLIP_TEXT,
+                 VFLIP_LONGTEXT, true )
+    add_integer( CFG_PREFIX "hcenter", -1, HCENTER_TEXT,
+                 HCENTER_LONGTEXT, true )
+    add_integer( CFG_PREFIX "vcenter", -1, VCENTER_TEXT,
+                 VCENTER_LONGTEXT, true )
     add_integer( CFG_PREFIX "audio-volume", -1, AUDIO_VOLUME_TEXT,
                 AUDIO_VOLUME_LONGTEXT, true )
     add_integer( CFG_PREFIX "audio-balance", -1, AUDIO_BALANCE_TEXT,
@@ -430,8 +372,8 @@ vlc_module_begin ()
                 AUDIO_BASS_LONGTEXT, true )
     add_integer( CFG_PREFIX "audio-treble", -1, AUDIO_TREBLE_TEXT,
                 AUDIO_TREBLE_LONGTEXT, true )
-    add_bool( CFG_PREFIX "audio-loudness", false, AUDIO_LOUDNESS_TEXT,
-              AUDIO_LOUDNESS_LONGTEXT, true )
+    add_integer( CFG_PREFIX "audio-loudness", -1, AUDIO_LOUDNESS_TEXT,
+                AUDIO_LOUDNESS_LONGTEXT, true )
     add_string( CFG_PREFIX "set-ctrls", NULL, S_CTRLS_TEXT,
               S_CTRLS_LONGTEXT, true )
         change_safe()
@@ -1094,7 +1036,7 @@ static int InitVideo( vlc_object_t *p_obj, int i_fd, demux_sys_t *p_sys,
 
     /* TODO: Move the resolution stuff up here */
     /* if MPEG encoder card, no need to do anything else after this */
-    p_sys->controls = ControlsInit( p_obj, i_fd );
+    ControlList( p_obj, i_fd, b_demux );
 
     /* Reset Cropping */
     memset( &cropcap, 0, sizeof(cropcap) );

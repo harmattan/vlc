@@ -33,6 +33,8 @@ httprequests.processcommands()
 
 local statusTable=httprequests.getstatus(true)
 
-httprequests.printTableAsJson(statusTable)
+print('{')
+httprequests.printTableAsJson(statusTable,0)
+print('}')
 
 ?>

@@ -3,19 +3,19 @@
  *****************************************************************************
  * Copyright (C) 2011 Rémi Denis-Courmont
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -25,7 +25,6 @@
 #include <vlc_common.h>
 #include <vlc_plugin.h>
 #include <vlc_aout.h>
-#include <assert.h>
 
 static int Open (vlc_object_t *);
 static void Close (vlc_object_t *);
@@ -144,60 +143,14 @@ static int Open (vlc_object_t *obj)
         goto error;
 
     /* TODO: amem-format */
-    if (strcmp(format, "S16N"))
+    /* FIXME/TODO channel mapping */
+    if (strcmp(format, "S16N") || aout->format.i_channels != channels)
     {
         msg_Err (aout, "format not supported");
         goto error;
     }
-
-    /* channel mapping */
-    switch (channels)
-    {
-        case 1:
-            aout->format.i_physical_channels = AOUT_CHAN_CENTER;
-            break;
-        case 2:
-            aout->format.i_physical_channels =
-                AOUT_CHAN_LEFT | AOUT_CHAN_RIGHT;
-            break;
-        case 3:
-            aout->format.i_physical_channels =
-                AOUT_CHAN_LEFT | AOUT_CHAN_RIGHT | AOUT_CHAN_LFE;
-            break;
-        case 4:
-            aout->format.i_physical_channels =
-                AOUT_CHAN_LEFT | AOUT_CHAN_RIGHT |
-                AOUT_CHAN_REARLEFT | AOUT_CHAN_REARRIGHT;
-            break;
-        case 5:
-            aout->format.i_physical_channels =
-                AOUT_CHAN_LEFT | AOUT_CHAN_RIGHT | AOUT_CHAN_CENTER |
-                AOUT_CHAN_REARLEFT | AOUT_CHAN_REARRIGHT;
-            break;
-        case 6:
-            aout->format.i_physical_channels =
-                AOUT_CHAN_LEFT | AOUT_CHAN_RIGHT | AOUT_CHAN_CENTER |
-                AOUT_CHAN_REARLEFT | AOUT_CHAN_REARRIGHT | AOUT_CHAN_LFE;
-            break;
-        case 7:
-            aout->format.i_physical_channels =
-                AOUT_CHAN_LEFT | AOUT_CHAN_RIGHT | AOUT_CHAN_CENTER |
-                AOUT_CHAN_REARCENTER | AOUT_CHAN_MIDDLELEFT |
-                AOUT_CHAN_MIDDLERIGHT | AOUT_CHAN_LFE;
-            break;
-        case 8:
-            aout->format.i_physical_channels =
-                AOUT_CHAN_LEFT | AOUT_CHAN_RIGHT | AOUT_CHAN_CENTER |
-                AOUT_CHAN_REARLEFT | AOUT_CHAN_REARRIGHT |
-                AOUT_CHAN_MIDDLELEFT | AOUT_CHAN_MIDDLERIGHT | AOUT_CHAN_LFE;
-            break;
-        default:
-            assert(0);
-    }
-
     aout->format.i_format = VLC_CODEC_S16N;
     aout->format.i_rate = rate;
-    aout->format.i_original_channels = aout->format.i_physical_channels;
 
     aout->pf_play = Play;
     aout->pf_pause = Pause;

@@ -1,7 +1,7 @@
 /*****************************************************************************
  * playlist.m: MacOS X interface module
  *****************************************************************************
-* Copyright (C) 2002-2009 VLC authors and VideoLAN
+* Copyright (C) 2002-2009 the VideoLAN team
  * $Id$
  *
  * Authors: Jon Lech Johansen <jon-vl@nanocrew.net>

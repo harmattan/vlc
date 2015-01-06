@@ -2704,23 +2704,6 @@ static int MP4_ReadBox_iods( stream_t *p_stream, MP4_Box_t *p_box )
     MP4_READBOX_EXIT( 1 );
 }
 
-static int MP4_ReadBox_pasp( stream_t *p_stream, MP4_Box_t *p_box )
-{
-    MP4_READBOX_ENTER( MP4_Box_data_pasp_t );
-
-    MP4_GET4BYTES( p_box->data.p_pasp->i_horizontal_spacing );
-    MP4_GET4BYTES( p_box->data.p_pasp->i_vertical_spacing );
-
-#ifdef MP4_VERBOSE
-    msg_Dbg( p_stream,
-             "read box: \"paps\" %dx%d",
-             p_box->data.p_pasp->i_horizontal_spacing,
-             p_box->data.p_pasp->i_vertical_spacing);
-#endif
-
-    MP4_READBOX_EXIT( 1 );
-}
-
 
 /* For generic */
 static int MP4_ReadBox_default( stream_t *p_stream, MP4_Box_t *p_box )
@@ -2835,7 +2818,6 @@ static const struct
     { ATOM_gnre,    MP4_ReadBox_gnre,         MP4_FreeBox_Common },
     { ATOM_trkn,    MP4_ReadBox_trkn,         MP4_FreeBox_Common },
     { ATOM_iods,    MP4_ReadBox_iods,         MP4_FreeBox_Common },
-    { ATOM_pasp,    MP4_ReadBox_pasp,         MP4_FreeBox_Common },
 
     /* Nothing to do with this box */
     { ATOM_mdat,    MP4_ReadBoxSkip,          MP4_FreeBox_Common },
@@ -3221,12 +3203,17 @@ static void get_token( char **ppsz_path, char **ppsz_token, int *pi_number )
         *pi_number = 0;
         return;
     }
-    i_len = strcspn( *ppsz_path, "/[" );
+    i_len = 0;
+    while(  (*ppsz_path)[i_len] &&
+            (*ppsz_path)[i_len] != '/' && (*ppsz_path)[i_len] != '[' )
+    {
+        i_len++;
+    }
     if( !i_len && **ppsz_path == '/' )
     {
         i_len = 1;
     }
-    *ppsz_token = xmalloc( i_len + 1 );
+    *ppsz_token = malloc( i_len + 1 );
 
     memcpy( *ppsz_token, *ppsz_path, i_len );
 

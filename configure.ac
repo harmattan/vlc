@@ -2,12 +2,12 @@ dnl Autoconf settings for vlc
 
 AC_COPYRIGHT([Copyright 2002-2011 the VideoLAN team])
 
-AC_INIT(vlc, 1.2.0-pre1)
+AC_INIT(vlc, 1.2.0-git)
 VERSION_MAJOR=1
 VERSION_MINOR=2
 VERSION_REVISION=0
 VERSION_EXTRA=0
-VERSION_DEV=pre1
+VERSION_DEV=git
 
 PKGDIR="vlc"
 AC_SUBST(PKGDIR)
@@ -70,8 +70,12 @@ AC_PROG_MAKE_SET
 AC_PROG_INSTALL
 AM_PROG_AS
 
-AC_ARG_VAR([DESKTOP_FILE_VALIDATE], [Validator for desktop entry files])
-AC_CHECK_PROGS(DESKTOP_FILE_VALIDATE, [${DESKTOP_FILE_VALIDATE} desktop-file-validate], :)
+dnl Find the right ranlib, even when cross-compiling
+AC_CHECK_TOOL(RANLIB, ranlib, :)
+AC_CHECK_TOOL(STRIP, strip, :)
+AC_CHECK_TOOL(AR, ar, :)
+AC_CHECK_TOOL(LD, ld, :)
+AC_CHECK_TOOL(DLLTOOL, dlltool, :)
 
 dnl Check for compiler properties
 AC_C_CONST
@@ -559,7 +563,7 @@ need_libc=false
 dnl Check for usual libc functions
 AC_CHECK_DECLS([nanosleep],,,[#include <time.h>])
 AC_CHECK_FUNCS([daemon fcntl fstatvfs fork getenv getpwuid_r if_nameindex if_nametoindex isatty lstat memalign mmap openat pread posix_fadvise posix_madvise setlocale stricmp strnicmp uselocale])
-AC_REPLACE_FUNCS([asprintf atof atoll dirfd fdopendir flockfile fsync getdelim getpid gmtime_r inet_pton lldiv localtime_r nrand48 rewind setenv strcasecmp strcasestr strdup strlcpy strncasecmp strndup strnlen strsep strtof strtok_r strtoll swab tdestroy vasprintf])
+AC_REPLACE_FUNCS([asprintf atof atoll dirfd fdopendir flockfile fsync getdelim getpid gmtime_r lldiv localtime_r nrand48 rewind setenv strcasecmp strcasestr strdup strlcpy strncasecmp strndup strnlen strsep strtof strtok_r strtoll swab tdestroy vasprintf])
 AC_CHECK_FUNCS(fdatasync,,
   [AC_DEFINE(fdatasync, fsync, [Alias fdatasync() to fsync() if missing.])
 ])
@@ -655,6 +659,12 @@ dnl  we purposedly make the test fail on Windows
 LIBS_save="${LIBS}"
 AC_SEARCH_LIBS([getaddrinfo], [nsl],,, [${SOCKET_LIBS}])
 LIBS="${LIBS_save}"
+
+AC_CHECK_FUNCS(inet_aton,,[
+  AC_CHECK_LIB(resolv,inet_aton,[
+    VLC_ADD_LIBS([libvlccore],[-lresolv])
+  ])
+])
 
 dnl FreeBSD has a gnugetopt library for this:
 GNUGETOPT_LIBS=""
@@ -759,7 +769,7 @@ dnl Check for headers
 AC_CHECK_HEADERS([search.h])
 AC_CHECK_HEADERS(getopt.h strings.h locale.h xlocale.h)
 AC_CHECK_HEADERS(fcntl.h sys/time.h sys/ioctl.h sys/stat.h)
-AC_CHECK_HEADERS([arpa/inet.h netinet/udplite.h sys/eventfd.h])
+AC_CHECK_HEADERS([arpa/inet.h netinet/in.h netinet/udplite.h sys/eventfd.h])
 AC_CHECK_HEADERS([net/if.h], [], [],
   [
     #include <sys/types.h>
@@ -797,7 +807,7 @@ PKG_PROG_PKG_CONFIG()
 
 dnl On some OS we need static linking
 AS_IF([test -n "${PKG_CONFIG}" ],[
-    AS_IF([test "${SYS}" = "mingw32" -o "${SYS}" = "mingwce" -o "${SYS}" = "darwin" -o "${SYS}" = "os2" ],[
+    AS_IF([test "${SYS}" = "mingw32" -o "${SYS}" = "mingwce" -o "${SYS}" = "darwin" ],[
         PKG_CONFIG="${PKG_CONFIG} --static"
     ])
 ])
@@ -831,7 +841,7 @@ dnl Manual switch for UTF-8
 AC_ARG_ENABLE(non-utf8,
   [AS_HELP_STRING([--enable-non-utf8],
     [support legacy non-UTF-8 systems (default disabled)])],, [
-  AS_IF([test "${SYS}" = "mingw32" -o "${SYS}" = "mingwce" -o "${SYS}" = "os2"], [
+  AS_IF([test "${SYS}" = "mingw32" -o "${SYS}" = "mingwce"], [
     enable_non_utf8="no"
   ])
 ])
@@ -850,7 +860,7 @@ case "${SYS}" in
 if test "${enable_dbus}" != "no" -a "${SYS}" != "mingw32" -a "${SYS}" != "mingwce"
 then
   dnl api stable dbus
-  PKG_CHECK_MODULES(DBUS, [dbus-1 >= 1.0.0],
+  PKG_CHECK_MODULES(DBUS, dbus-1 >= 1.0.0,
     [ AC_DEFINE( HAVE_DBUS, 1, [Define if you have the D-BUS library] )
       VLC_ADD_LIBS([libvlccore],[$DBUS_LIBS])
       VLC_ADD_CFLAGS([libvlccore],[$DBUS_CFLAGS])
@@ -877,7 +887,7 @@ then
         VLC_ADD_LIBS([inhibit],[$DBUS_LIBS])
         VLC_ADD_CFLAGS([inhibit],[$DBUS_CFLAGS])
     ],
-    [AC_MSG_ERROR([${DBUS_PKG_ERRORS}.])]
+    [AC_MSG_ERROR([Couldn't find DBus >= 1.0.0, install libdbus-dev ?])]
   )
 fi
 ;;
@@ -1154,9 +1164,7 @@ ALIASES="${ALIASES} cvlc rvlc"
 dnl
 dnl Some plugins aren't useful on some platforms
 dnl
-if test "${SYS}" = "os2"; then
-    VLC_ADD_PLUGIN([dynamicoverlay])
-elif test "${SYS}" != "mingw32" -a "${SYS}" != "mingwce"; then
+if test "${SYS}" != "mingw32" -a "${SYS}" != "mingwce"; then
     VLC_ADD_PLUGIN([dynamicoverlay access_shm])
 elif test "${SYS}" != "mingwce"; then
     VLC_ADD_PLUGIN([access_smb dmo globalhotkeys])
@@ -1580,11 +1588,10 @@ then
   PKG_CHECK_MODULES(LUA, lua5.1,
     [ have_lua=yes ],
     [
-    AC_MSG_WARN([${LUA_PKG_ERRORS}, trying lua >= 5.1 instead])
+    AC_MSG_WARN([lua5.1 not found, trying lua >= 5.1 instead])
     PKG_CHECK_MODULES(LUA, lua >= 5.1,
       [ have_lua=yes ],
       [
-        AC_MSG_WARN([${LUA_PKG_ERRORS}, trying manual detection instead])
         have_lua=yes
         AC_CHECK_HEADERS([lua.h lauxlib.h lualib.h],
           [],
@@ -1646,6 +1653,22 @@ AM_CONDITIONAL([ENABLE_VLM], [test "${enable_vlm}" != "no"])
 
 
 dnl
+dnl  ipv6 support
+dnl
+have_ipv6=no
+AC_CHECK_FUNCS(inet_pton,[have_ipv6=yes],[
+  AC_CHECK_LIB(nsl,inet_pton, [have_ipv6=yes])
+])
+
+AS_IF([test "${have_ipv6}" = "yes"], [
+  AC_DEFINE(HAVE_INET_PTON, 1, [Define to 1 if you have inet_pton().])])
+
+
+AC_CHECK_FUNCS(inet_ntop,[
+  AC_DEFINE(HAVE_INET_NTOP, 1, [Define to 1 if you have inet_ntop().])])
+
+
+dnl
 dnl  Input plugins
 dnl
 
@@ -1662,8 +1685,8 @@ AS_IF([test "${enable_libproxy}" != "no"], [
     VLC_ADD_CFLAGS([access_http],[$LIBPROXY_CFLAGS])
     VLC_ADD_LIBS([access_http],[$LIBPROXY_LIBS])
   ], [
-    AS_IF([test -n "${enable_libproxy}"], [
-      AC_MSG_ERROR([${LIBPROXY_PKG_ERRORS}.])
+    AS_IF([test "x${enable_libproxy}" != "x"], [
+      AC_MSG_ERROR([libproxy could not be found on your system])
     ])
   ])
 ])
@@ -1809,11 +1832,11 @@ AC_ARG_ENABLE(linsys,
     [Linux Linear Systems Ltd. SDI and HD-SDI input cards (default enabled)])])
 if test "$SYS" = "linux" -a "${enable_linsys}" != "no"; then
   VLC_ADD_PLUGIN([linsys_hdsdi])
-  PKG_CHECK_MODULES(LINSYS_SDI, [zvbi-0.2 >= 0.2.28],
+  PKG_CHECK_MODULES(LINSYS_SDI, zvbi-0.2 >= 0.2.28,
     [ VLC_ADD_LIBS([linsys_sdi],[$LINSYS_SDI_LIBS])
       VLC_ADD_CFLAGS([linsys_sdi],[$LINSYS_SDI_CFLAGS])
       VLC_ADD_PLUGIN([linsys_sdi]) ],
-    [AC_MSG_WARN([${LINSYS_SDI_PKG_ERRORS}.])]
+    [AC_MSG_WARN([Could not find zvbi >= 0.2.28, install libzvbi-dev ?])]
   )
 fi
 
@@ -1845,7 +1868,7 @@ then
     AC_CHECK_LIB(dvdnav, dvdnav_describe_title_chapters,
       AC_DEFINE(HAVE_DVDNAV_DESCRIBE_TITLE_CHAPTERS, 1, [Define if you have dvdnav_describe_title_chapters.]),
         [], [${LIBS_dvdnav}])],
-      [AC_MSG_WARN([${DVDNAV_PKG_ERRORS}.])])
+      [AC_MSG_WARN(dvdnav library not found)])
 fi
 
 dnl
@@ -1922,7 +1945,7 @@ AS_IF([test "$have_v4l2" = "yes"], [
     PKG_CHECK_MODULES(LIBV4L2, libv4l2, [
       AC_DEFINE(HAVE_LIBV4L2, 1, [Define to 1 if libv4l2 is available])
     ], [
-      AC_MSG_WARN([${LIBV4L2_PKG_ERRORS}.])
+      AC_MSG_WARN([${LIBV4L2_PKG_ERRORS}])
     ])
   ])
   AS_IF([test "${enable_pvr}" = "yes"], [
@@ -1972,12 +1995,12 @@ then
     PKG_CHECK_MODULES(LIBCDIO, [libcdio >= 0.78.2 libiso9660 >= 0.72],
       [VLC_ADD_LIBS([vcdx],[$LIBCDIO_LIBS])
          VLC_ADD_CFLAGS([vcdx],[$LIBCDIO_CFLAGS])],
-        [AC_MSG_ERROR([${LIBCDIO_PKG_ERRORS} (required for vcdx plugin).])])
+        [AC_MSG_ERROR([vcdx plugin requires libcdio >= 0.78.2 and libiso9660 >= 0.72])])
     PKG_CHECK_MODULES(LIBVCDINFO, libvcdinfo >= 0.7.22,
         [VLC_ADD_LIBS([vcdx],[$LIBVCDINFO_LIBS])
          VLC_ADD_CFLAGS([vcdx],[$LIBVCDINFO_CFLAGS])],
-      [AC_MSG_ERROR([${LIBVCDINFO_PKG_ERRORS} (required for vcdx plugin).])])
-    VLC_ADD_PLUGIN([vcdx])
+      [AC_MSG_ERROR([vcdx plugin requires libvcdinfo library >= 0.7.22])])
+        VLC_ADD_PLUGIN([vcdx])
 fi
 
 dnl
@@ -2019,7 +2042,7 @@ then
     AC_MSG_RESULT(no)
   ])
 
-  if test "${SYS}" = "bsdi" -o "${SYS}" = "mingw32" -o "${SYS}" = "os2"
+  if test "${SYS}" = "bsdi" -o "${SYS}" = "mingw32"
   then
     VLC_ADD_PLUGIN([vcd cdda])
   fi
@@ -2032,13 +2055,13 @@ then
   fi
 
   if test "$enable_libcddb" != "no"; then
-    PKG_CHECK_MODULES(LIBCDDB, [libcddb >= 0.9.5], [
+    PKG_CHECK_MODULES(LIBCDDB, libcddb >= 0.9.5, [
       HAVE_LIBCDDB=yes
       AC_DEFINE(HAVE_LIBCDDB, 1, [Define this if you have libcddb installed])
       VLC_ADD_LIBS([cdda],[$LIBCDDB_LIBS])
       VLC_ADD_CFLAGS([cdda],[$LIBCDDB_CFLAGS])
       ],:
-      [AC_MSG_WARN([${LIBCDDB_PKG_ERRORS}: CDDB access disabled.])
+      [AC_MSG_WARN(new enough libcddb not found. CDDB access disabled)
       HAVE_LIBCDDB=no])
   fi
 fi
@@ -2101,16 +2124,19 @@ then
 fi
 
 dnl
-dnl QTKit
-AC_ARG_ENABLE(macosx-qtkit,
-  [  --enable-macosx-qtkit Mac OS X qtcapture (video) and qtsound (audio) module (default enabled on Mac OS X)])
-if test "x${enable_macosx_qtkit}" != "xno" &&
-  (test "${SYS}" = "darwin" || test "${enable_macosx_qtkit}" = "yes")
+dnl QTCapture
+AC_ARG_ENABLE(macosx-qtcapture,
+  [  --enable-macosx-qtcapture Mac OS X qtcapture (iSight) module (default enabled on Mac OS X)])
+if test "x${enable_macosx_qtcapture}" != "xno" &&
+  (test "${SYS}" = "darwin" || test "${enable_macosx_qtcapture}" = "yes")
 then
+  VLC_ADD_LIBS([qtcapture], [-Wl,-framework,Cocoa])
+  VLC_ADD_LIBS([qtcapture], [-Wl,-framework,QTKit])
+  VLC_ADD_LIBS([qtcapture], [-Wl,-framework,CoreAudio])
+  VLC_ADD_LIBS([qtcapture], [-Wl,-framework,QuartzCore])
+  VLC_ADD_LIBS([qtcapture], [-Wl,-framework,CoreVideo])
   VLC_ADD_PLUGIN([qtcapture])
-  VLC_ADD_PLUGIN([qtsound])
 fi
-AM_CONDITIONAL(HAVE_QTKIT, [test "${SYS}" = "darwin" && "x${enable_macosx_qtkit}" != "xno"])
 
 
 dnl
@@ -2160,17 +2186,17 @@ AS_IF([test "${enable_sid}" != "no"], [
             VLC_ADD_CFLAGS([sid], [$SID_CFLAGS])
             VLC_ADD_LIBS([sid], [$SID_LIBS] [-lresid-builder])
         ], [
-            AS_IF([test -n "${enable_sid}"],
-                [AC_MSG_ERROR([${SID_PKG_ERRORS} (required for sid).])],
-                [AC_MSG_WARN([${SID_PKG_ERRORS} (required for sid).])]
+            AS_IF([test "x${enable_sid}" = "xyes"],
+                [AC_MSG_ERROR(Library libresid-builder needed for sid was not found)],
+                [AC_MSG_WARN(Library libresid-builder needed for sid was not found)]
                 )
         ])
         CPPFLAGS="$oldCPPFLAGS"
         AC_LANG_POP(C++)
     ], [
         AS_IF([test "x${enable_sid}" = "xyes"],
-            [AC_MSG_ERROR([${SID_PKG_ERRORS} (required for sid).])],
-            [AC_MSG_WARN([${SID_PKG_ERRORS} (required for sid).])]
+            [AC_MSG_ERROR(Library libsidplay2 needed for sid was not found)],
+            [AC_MSG_WARN(Library libsidplay2 needed for sid was not found)]
             )
     ])
 ])
@@ -2253,9 +2279,9 @@ if test "${enable_mod}" != "no" ; then
           VLC_ADD_CXXFLAGS([mod],[$LIBMODPLUG_CFLAGS])
           VLC_ADD_LIBS([mod],[$LIBMODPLUG_LIBS])
     ],[
-       AS_IF([test -n "${enable_mod}"],
-         [AC_MSG_ERROR([${LIBMODPLUG_PKG_ERRORS}.])],
-         [AC_MSG_WARN([${LIBMODPLUG_PKG_ERRORS}.])])
+       AS_IF([test x"${enable_mod}" = "xyes"],
+         [AC_MSG_ERROR(libmodplug not found or a broken version (0.8.8.0) was found!)],
+         [AC_MSG_WARN(libmodplug not found or a broken version (0.8.8.0) was found!)])
     ])
 fi
 
@@ -2455,7 +2481,7 @@ AS_IF([test "${enable_avcodec}" != "no"], [
       VLC_RESTORE_FLAGS
       have_avcodec="yes"
     ],[
-      AC_MSG_ERROR([${AVCODEC_PKG_ERRORS}. Pass --disable-avcodec to ignore this error.])
+      AC_MSG_ERROR([Could not find libavcodec or libavutil. Use --disable-avcodec to ignore this error.])
   ])
 ], [
   have_avcodec="no"
@@ -2467,32 +2493,32 @@ dnl
 AC_ARG_ENABLE(libva,
   [  --enable-libva          VAAPI GPU decoding support (libVA) (default auto)])
 
-AS_IF([test "${enable_libva}" = "yes" -a "${have_avcodec}" != "yes" ], [
-  AC_MSG_ERROR([--enable-libva and --disable-avcodec options are mutually exclusive. Use --enable-avcodec.])
-])
 AS_IF([test "${enable_libva}" != "no"], [
-  PKG_CHECK_MODULES(LIBVA, [libva libva-x11], [
-    VLC_SAVE_FLAGS
-    CPPFLAGS="${CPPFLAGS} ${AVCODEC_CFLAGS}"
-    CFLAGS="${CFLAGS} ${AVCODEC_CFLAGS}"
-    AC_CHECK_HEADERS(libavcodec/vaapi.h, [
-      VLC_ADD_LIBS([avcodec],[$LIBVA_LIBS ${X_LIBS} ${X_PRE_LIBS} -lX11])
-      VLC_ADD_CFLAGS([avcodec],[$LIBVA_CFLAGS ${X_CFLAGS}])
-      AC_DEFINE(HAVE_AVCODEC_VAAPI, 1, [Define if avcodec has to be built with VAAPI support.])
-      AC_MSG_NOTICE([VAAPI acceleration activated])
-    ],[
-      AS_IF([test -n "${enable_libva}"], [
-        AC_MSG_ERROR([libva is present but libavcodec/vaapi.h is missing])
-      ], [
-        AC_MSG_WARN([libva is present but libavcodec/vaapi.h is missing ])
+  AS_IF([test "x${have_avcodec}" = "xyes"], [
+    PKG_CHECK_MODULES(LIBVA, [libva libva-x11],
+      [
+        VLC_SAVE_FLAGS
+        CPPFLAGS="${CPPFLAGS} ${AVCODEC_CFLAGS}"
+        CFLAGS="${CFLAGS} ${AVCODEC_CFLAGS}"
+        AC_CHECK_HEADERS(libavcodec/vaapi.h, [
+           VLC_ADD_LIBS([avcodec],[$LIBVA_LIBS ${X_LIBS} ${X_PRE_LIBS} -lX11])
+           VLC_ADD_CFLAGS([avcodec],[$LIBVA_CFLAGS ${X_CFLAGS}])
+           AC_DEFINE(HAVE_AVCODEC_VAAPI, 1, [Define if avcodec has to be built with VAAPI support.])
+           echo "VAAPI acceleration activated"
+        ],[
+    AS_IF([test "${enable_libva}" = "yes"],
+          [AC_MSG_ERROR([libva is present but libavcodec/vaapi.h is missing])],
+              [AC_MSG_WARN([libva is present but libavcodec/vaapi.h is missing ])])
+        ])
+        VLC_RESTORE_FLAGS
+      ],[
+    AS_IF([test "${enable_libva}" = "yes"],
+              [AC_MSG_ERROR([Could not find required libva.])],
+              [AC_MSG_WARN([libva not found  ])])
       ])
-    ])
-    VLC_RESTORE_FLAGS
   ],[
-    AS_IF([test -n "${enable_libva}"], [
-      AC_MSG_ERROR([${LIBVA_PKG_ERRORS}.])
-    ], [
-      AC_MSG_WARN([${LIBVA_PKG_ERRORS}.])
+    AS_IF([test "x${enable_libva}" != "x"], [
+      AC_MSG_ERROR([--enable-libva and --disable-avcodec options are mutually exclusive.])
     ])
   ])
 ])
@@ -2576,7 +2602,7 @@ then
       ])
       VLC_RESTORE_FLAGS
     ],[
-      AC_MSG_ERROR([${AVFORMAT_PKG_ERRORS}. Pass --disable-avformat to ignore this error.])
+      AC_MSG_ERROR([Could not find libavformat or libavutil. Use --disable-avformat to ignore this error.])
   ])
 fi
 
@@ -2603,7 +2629,7 @@ then
       ])
       VLC_RESTORE_FLAGS
     ],[
-      AC_MSG_ERROR([${SWSCALE_PKG_ERRORS}. Pass --disable-swscale to ignore this error. Proper software scaling and some video chroma conversion will be missing.])
+      AC_MSG_ERROR([Could not find libswscale. Use --disable-swscale to ignore this error. Proper software scaling and some video chroma conversion will be missing.])
   ])
 fi
 
@@ -2626,7 +2652,7 @@ then
       VLC_ADD_CFLAGS([postproc],[$POSTPROC_CFLAGS $AVUTIL_CFLAGS])
       VLC_RESTORE_FLAGS
     ],[
-      AC_MSG_ERROR([${POSTPROC_PKG_ERRORS}. Pass --disable-postproc to ignore this error.])
+      AC_MSG_ERROR([Could not find libpostproc. Use --disable-postproc to ignore this error.])
   ])
 fi
 
@@ -2819,22 +2845,9 @@ then
 fi
 
 dnl
-dnl  Speex plugins
+dnl  Speex plugin
 dnl
-PKG_ENABLE_MODULES_VLC([SPEEX], [], [ogg speex >= 1.0.5], [Speex support], [auto])
-have_speexdsp="no"
-AS_IF([test "${enable_speex}" != "no"], [
-  PKG_CHECK_MODULES([SPEEXDSP], [speexdsp], [
-    have_speexdsp="yes"
-  ], [
-    AS_IF([test -n "${enable_speex}"], [
-      AC_MSG_ERROR([${SPEEXDSP_PKG_ERRORS}.])
-    ], [
-      AC_MSG_WARN([${SPEEXDSP_PKG_ERRORS}.])
-    ])
-  ])
-])
-AM_CONDITIONAL([HAVE_SPEEXDSP], [test "$have_speexdsp" = "yes"])
+PKG_ENABLE_MODULES_VLC([SPEEX], [], [ogg speex >= 1.0.5], [Speex decoder support], [auto])
 
 dnl
 dnl  theora decoder plugin
@@ -2922,7 +2935,7 @@ if test "${enable_x264}" != "no"; then
         fi
       ],[
         if test "${enable_x264}" = "yes"; then
-            AC_MSG_ERROR([${X264_PKG_ERRORS}: you may get it from http://www.videolan.org/x264.html])
+            AC_MSG_ERROR([Could not find libx264 >= 0.86 on your system: you may get it from http://www.videolan.org/x264.html])
           fi
       ])
     LDFLAGS="${LDFLAGS_save}"
@@ -2948,7 +2961,8 @@ AC_ARG_ENABLE(telx,
                   zvbi) (default enabled if zvbi is absent)]))
 
 AS_IF( [test "${enable_zvbi}" != "no"],[
-    PKG_CHECK_MODULES(ZVBI, [zvbi-0.2 >= 0.2.28],
+    PKG_CHECK_MODULES(ZVBI,
+        zvbi-0.2 >= 0.2.28,
         [
           VLC_ADD_LIBS([zvbi],[$ZVBI_LIBS])
           if test "${SYS}" = "mingw32"; then
@@ -2958,10 +2972,11 @@ AS_IF( [test "${enable_zvbi}" != "no"],[
           VLC_ADD_PLUGIN([zvbi])
           AC_DEFINE(ZVBI_COMPILED, 1, [Define if the zvbi module is built])
           AS_IF( [test "${enable_telx}" = "yes"],[
-                  AC_MSG_WARN([The zvbi and telx modules are incompatible. Using zvbi.])
+                  AC_MSG_WARN([The zvbi and telx modules are uncompatibles.
+                               Using zvbi.])
                   ])
         ],[
-          AC_MSG_WARN([${ZVBI_PKG_ERRORS}. Enabling the telx module instead.])
+          AC_MSG_WARN(ZVBI library not found. Enabling the telx module instead)
         ])
     ])
 AS_IF( [test "${enable_telx}" != "no" ],[
@@ -2974,7 +2989,7 @@ dnl
 AC_ARG_ENABLE(libass,
   [  --enable-libass         Subtitle support using libass (default enabled)])
 AS_IF( [test "${enable_libass}" != "no"], [
-  PKG_CHECK_MODULES(LIBASS, [libass >= 0.9.8],
+  PKG_CHECK_MODULES(LIBASS, libass >= 0.9.8,
       [
         VLC_ADD_LIBS([libass],[$LIBASS_LIBS])
         VLC_ADD_CFLAGS([libass],[$LIBASS_CFLAGS])
@@ -2985,7 +3000,7 @@ AS_IF( [test "${enable_libass}" != "no"], [
            VLC_ADD_LIBS([libass],[-lfontconfig])
        ])
       ],[
-        AC_MSG_WARN([${LIBASS_PKG_ERRORS}.])
+        AC_MSG_WARN([LIBASS library not found])
       ])
   ])
 
@@ -3004,8 +3019,8 @@ AS_IF([test "${enable_tiger}" != "no"], [
       AC_DEFINE(HAVE_TIGER, 1, [Define if libtiger is available.])
       VLC_ADD_CFLAGS([kate],[$TIGER_CFLAGS])
       VLC_ADD_LIBS([kate],[$TIGER_LIBS]) ],[
-        AS_IF([test -n "${enable_tiger}"], [
-          AC_MSG_ERROR([${TIGER_PKG_ERRORS}.])
+        AS_IF([test "x${enable_tiger}" != "x"], [
+          AC_MSG_ERROR([libtiger does not appear to be installed on your system.])
         ])
   ])
 ])
@@ -3059,7 +3074,7 @@ AS_IF([test "${enable_xcb}" != "no"], [
     VLC_ADD_LIBS([panoramix],[${XCB_RANDR_LIBS} ${XCB_LIBS}])
     VLC_ADD_CFLAGS([panoramix],[${XCB_RANDR_CFLAGS} ${XCB_CFLAGS}])
   ], [
-    AC_MSG_WARN([${XCB_RANDR_PKG_ERRORS}. Panoramix filter will not be supported.])
+    AC_MSG_WARN([libxcb-randr not found. Panoramix filter will not be supported.])
   ])
 
   dnl xcb-utils
@@ -3070,7 +3085,7 @@ AS_IF([test "${enable_xcb}" != "no"], [
     VLC_ADD_LIBS([globalhotkeys], [${XCB_KEYSYMS_LIBS} ${XCB_LIBS}])
     VLC_ADD_CFLAGS([xcb_window], [-DHAVE_XCB_KEYSYMS])
   ], [
-    AC_MSG_WARN([${XCB_KEYSYMS_PKG_ERRORS}. Hotkeys will not work.])
+    AC_MSG_WARN([libxcb-keysyms (0.3.4 or later) not found. Hotkeys will not work.])
   ])
 ])
 AM_CONDITIONAL([HAVE_XCB], [test "${have_xcb}" = "yes"])
@@ -3086,7 +3101,7 @@ AS_IF([test "${enable_glx}" != "no"], [
       GL_CFLAGS=""
       GL_LIBS="-lGL"
     ], [
-      AC_MSG_ERROR([${GL_PKG_ERRORS}. If you do not need OpenGL with X11, pass --disable-glx.])
+      AC_MSG_ERROR([GLX (libGL) cannot be found. If you do not need OpenGL with X11, use --disable-glx.])
     ])
   ])
   VLC_ADD_PLUGIN([xcb_glx])
@@ -3114,7 +3129,7 @@ then
       if test "${SYS}" != "darwin"; then
         VLC_ADD_PLUGIN([vout_sdl])
       fi
-      if test "${SYS}" != "mingw32" -a "${SYS}" != "os2"; then
+      if test "${SYS}" != "mingw32"; then
         VLC_ADD_LIBS([vout_sdl],[${X_LIBS} ${X_PRE_LIBS} -lX11])
       fi
       VLC_ADD_CFLAGS([vout_sdl],[${SDL_CFLAGS}])
@@ -3126,11 +3141,14 @@ then
           VLC_ADD_PLUGIN([sdl_image])
           VLC_ADD_LIBS([sdl_image],[${SDL_IMAGE_LIBS}])
           VLC_ADD_CFLAGS([sdl_image], [${SDL_IMAGE_CFLAGS}])],
-          [ AC_MSG_WARN([${SDL_IMAGE_PKG_ERRORS}. You should install it alongside your SDL package.])
+          [ AC_MSG_WARN([The development package for SDL_image is not installed.
+    You should install it alongside your SDL package.])
           ])
       ])
    ],[
-     AC_MSG_WARN([${SDL_PKG_ERRORS}.])
+     AC_MSG_WARN([The development package for SDL is not present or too old.
+                  You need 1.2.10. Alternatively you can also configure with
+                  --disable-sdl.])
    ])
 fi
 
@@ -3188,13 +3206,13 @@ if test "${enable_freetype}" != "no"; then
         PKG_CHECK_MODULES(FRIBIDI, fribidi, [
           VLC_ADD_CPPFLAGS([freetype skins2], [${FRIBIDI_CFLAGS} -DHAVE_FRIBIDI])
           VLC_ADD_LIBS([freetype skins2], [${FRIBIDI_LIBS}])
-        ],[AC_MSG_WARN([${FRIBIDI_PKG_ERRORS}. Bidirectional support will be disabled in FreeType.])])
+        ],[AC_MSG_WARN([library fribidi not found. Bidirectional support will be disabled in freetype])])
       fi
 
   ],[
   have_freetype=no
-  AS_IF([test -n "${enable_freetype}"],[
-    AC_MSG_ERROR([${FREETYPE_PKG_ERRORS}. Install FreeType2 development or configure with --disable-freetype.])
+  AS_IF([ test "${enable_freetype}" = "yes"],[
+    AC_MSG_ERROR([Freetype2 package cannot be detected. Install Freetype2 development or configure with --disable-freetype.])
     ])
   ])
 fi
@@ -3387,7 +3405,7 @@ if test "${enable_directfb}" = "yes"; then
         VLC_ADD_CPPFLAGS([directfb],[${CPPFLAGS_mydirectfb}])
         VLC_ADD_LIBS([directfb],[${LIBS_mydirectfb}])
     else
-        AC_MSG_ERROR([${DIRECTFB_PKG_ERRORS}.])
+        AC_MSG_ERROR([cannot find directfb headers and/or libraries ])
     fi
 fi
 
@@ -3564,29 +3582,6 @@ dnl
 PKG_ENABLE_MODULES_VLC([SAMPLERATE], [], [samplerate], [Resampler with libsamplerate], [auto])
 
 dnl
-dnl  OS/2 KAI plugin
-dnl
-AC_ARG_ENABLE(kai,
-  [AS_HELP_STRING([--enable-kai],
-    [support the K Audio Interface KAI (default enabled on OS/2)])],, [
-  AS_IF([test "$SYS" = "os2"], [
-    enable_kai="yes"
-  ])
-])
-have_kai="no"
-KAI_LIBS=""
-AS_IF([test "$enable_kai" != "no"], [
-  AC_CHECK_HEADERS([kai.h], [
-    have_kai="yes"
-    AC_CHECK_LIB(kai, main, [
-      KAI_LIBS="-lkai"
-    ])
-  ])
-])
-AC_SUBST(KAI_LIBS)
-AM_CONDITIONAL([HAVE_KAI], [test "${have_kai}" = "yes"])
-
-dnl
 dnl  Interface plugins
 dnl
 
@@ -3655,7 +3650,7 @@ AS_IF([test "${enable_hildon}" = "yes"], [
       VLC_ADD_CFLAGS([hildon],[${HILDON_FM_CFLAGS} -DHAVE_HILDON_FM])
       VLC_ADD_LIBS([hildon],[${HILDON_FM_LIBS}])
     ], [
-      AC_MSG_WARN([${HILDON_FM_PKG_ERRORS}.])
+      AC_MSG_WARN(hildon-fm-2 not found)
     ])
     VLC_ADD_CFLAGS([hildon],[${HILDON_CFLAGS} ${X_CFLAGS}])
     VLC_ADD_LIBS([hildon],[${HILDON_LIBS} ${X_LIBS} ${X_PRE_LIBS} -lX11])
@@ -3663,7 +3658,7 @@ AS_IF([test "${enable_hildon}" = "yes"], [
     ALIASES="${ALIASES} mvlc"
   ], [
     AS_IF([test "${enable_hildon}" = "yes"],[
-      AC_MSG_ERROR([${HILDON_PKG_ERRORS}.])
+      AC_MSG_ERROR([Hildon libraries not found])
     ])
     enable_hildon="no"
   ])
@@ -3715,10 +3710,10 @@ AS_IF([test "${enable_qt4}" != "no"], [
     AC_PATH_PROG(RCC, rcc, rcc,`eval $PKG_CONFIG --variable=exec_prefix QtCore`/bin)
     AC_PATH_PROGS(UIC, [uic-qt4 uic], uic,`eval $PKG_CONFIG --variable=exec_prefix QtCore`/bin)
   ], [
-    AS_IF([test -n "${enable_qt4}"],[
-      AC_MSG_ERROR([${QT4_PKG_ERRORS}.])
+    AS_IF([test "${enable_qt4}" = "yes"],[
+      AC_MSG_ERROR([Qt 4 library not found])
     ],[
-      AC_MSG_WARN([${QT4_PKG_ERRORS}.])
+      AC_MSG_WARN([Qt 4 library not found])
     ])
     enable_qt4="no"
   ])
@@ -3876,7 +3871,7 @@ AS_IF([test "${enable_projectm}" != "no"],
         [ AC_MSG_WARN( [Using libprojectM version 1] )
       ])
     ],[
-      AC_MSG_WARN([${PROJECTM_PKG_ERRORS}.])
+      AC_MSG_WARN([libprojectM library not found])
     ])
   ])
 
@@ -3976,8 +3971,8 @@ AS_IF([test "${enable_gnutls}" != "no"], [
     VLC_ADD_CFLAGS([gnutls], [${GCRYPT_CFLAGS}])
     VLC_ADD_LIBS([gnutls], [$GNUTLS_LIBS])
   ], [
-    AS_IF([test -n "${enable_gnutls}"], [
-      AC_MSG_ERROR([${GNUTLS_PKG_ERRORS}.)])
+    AS_IF([test "${enable_gnutls}" = "yes"], [
+      AC_MSG_ERROR([GNU TLS not present or too old (version 2.0.0 required)])
     ])
   ])
 ])
@@ -4036,7 +4031,7 @@ AS_IF([test "${enable_taglib}" != "no"], [
     VLC_ADD_LIBS([taglib],[$TAGLIB_LIBS -lz])
     VLC_ADD_CXXFLAGS([taglib],[$TAGLIB_CFLAGS])
   ], [
-    AC_MSG_WARN([${TAGLIB_PKG_ERRORS}.])])
+    AC_MSG_WARN(TagLib library not found)])
 ])
 
 
@@ -4055,6 +4050,39 @@ then
   VLC_ADD_CFLAGS([libvlccore], [${GCRYPT_CFLAGS}])
   AC_DEFINE([UPDATE_CHECK], 1, [Define if you want to use the VLC update mechanism])
 fi
+
+dnl
+dnl SQLite
+dnl
+AC_ARG_WITH(sqlite,
+  [  --with-sqlite=PATH      sqlite path linking])
+if test "${SYS}" != "darwin"; then
+  PKG_ENABLE_MODULES_VLC([SQLITE], [], [sqlite3 >= 3.6.0], [sqlite3], [auto])
+else
+  if test "${enable_sqlite}" != "no"
+  then
+    AC_CHECK_HEADERS(sqlite3.h, [
+        VLC_ADD_PLUGIN([sqlite])
+        if test "${with_sqlite}" != "no" -a -n "${with_sqlite}"; then
+          AC_MSG_CHECKING(existence of sqlite directory in ${with_sqlite})
+          real_sqlite="`cd ${with_sqlite} 2>/dev/null && pwd`"
+          if test -z "${real_sqlite}"
+          then
+            dnl  The given directory can't be found
+            AC_MSG_RESULT(no)
+            AC_MSG_ERROR([cannot cd to ${with_sqlite}])
+          fi
+          VLC_ADD_CFLAGS([sqlite],[-I${with_sqlite}/include])
+          VLC_ADD_LIBS([sqlite], [-L${with_sqlite}/lib -lsqlite3])
+          AC_MSG_RESULT(yes)
+        else
+          VLC_ADD_LIBS([sqlite], [-lsqlite3])
+        fi
+        AC_DEFINE([SQLITE_MODULE], 1, [Define if you want to use SQLite module]) ],
+        AC_MSG_ERROR([sqlite3 is required for sqlite module]) )
+  fi
+fi
+AM_CONDITIONAL([HAVE_SQLITE], [test "${enable_sqlite}" != "no"])
 
 dnl
 dnl Growl notification plugin
@@ -4082,28 +4110,16 @@ dnl media library
 dnl
 AC_ARG_ENABLE(media-library,
     [  --enable-media-library  media library (default disabled)])
-AS_IF([test "${enable_media_library}" = "yes"], [
-  AC_DEFINE([MEDIA_LIBRARY], 1, [Define if you want to use the VLC media library])
-  VLC_ADD_CPPFLAGS([qt4],"-DMEDIA_LIBRARY")
-  VLC_ADD_PLUGIN([media_library])
-
-dnl
-dnl SQLite
-dnl
-  AS_IF([test "${SYS}" != "darwin"], [
-    PKG_ENABLE_MODULES_VLC([SQLITE], [], [sqlite3 >= 3.6.0], [sqlite3], [auto])
-  ], [
-    AS_IF([test "${enable_sqlite}" != "no"], [
-      AC_CHECK_HEADERS(sqlite3.h, [
-        VLC_ADD_PLUGIN([sqlite])
-        VLC_ADD_LIBS([sqlite], [-lsqlite3])
-      ], [
-        AC_MSG_ERROR([sqlite3 is required for the media library])
-      ])
-    ])
-  ])
-])
-
+if test "${enable_media_library}" = "yes"; then
+    if test "${enable_sqlite}" != "yes"; then
+       AC_MSG_ERROR([SQLite module is required for the media library])
+    else
+       AC_DEFINE([MEDIA_LIBRARY], 1, [Define if you want to use the VLC media library])
+       VLC_ADD_CPPFLAGS([qt4],"-DMEDIA_LIBRARY")
+       VLC_ADD_PLUGIN([media_library])
+    fi
+fi
+AM_CONDITIONAL([ENABLE_MEDIA_LIBRARY], [test "${enable_media_library}" = "yes"])
 
 dnl
 dnl  Endianness check
@@ -4308,7 +4324,6 @@ AC_CONFIG_FILES([
   modules/packetizer/Makefile
   modules/services_discovery/Makefile
   modules/stream_filter/Makefile
-  modules/stream_filter/dash/Makefile
   modules/stream_out/Makefile
   modules/stream_out/transcode/Makefile
   modules/text_renderer/Makefile

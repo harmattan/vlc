@@ -270,9 +270,9 @@ QVariant MLModel::data( const QModelIndex &index, const int role ) const
             QVariant tmp = it->data( index.column() );
             return tmp;
         }
-        else if( role == IsLeafNodeRole )
+        else if( role == VLCModel::IsLeafNodeRole )
             return QVariant( true );
-        else if( role == IsCurrentsParentNodeRole )
+        else if( role == VLCModel::IsCurrentsParentNodeRole )
             return QVariant( false );
     }
     return QVariant();

@@ -27,14 +27,12 @@
 
 #include "mkv.hpp"
 
-class EbmlParser;
+
+#include "Ebml_parser.hpp"
 
 class chapter_edition_c;
 class chapter_translation_c;
 class chapter_item_c;
-
-struct mkv_track_t;
-struct mkv_index_t;
 
 class matroska_segment_c
 {

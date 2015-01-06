@@ -1,4 +1,4 @@
-Changes between 1.1.x and 1.2.0-pre1:
+Changes between 1.1.x and 1.2.0-git:
 ------------------------------------
 
 Important notes:
@@ -6,12 +6,6 @@ Important notes:
    conflicts with some URLs and file names. For instance, this plays a DVD
    from the 2nd chapter of the 1st title up to the 4th chapter of the 3rd
    title:  vlc dvd://#1:2-3:4
- * The 40+ --*-caching options were simplified and dumbed down to 4 options:
-   - --file-caching specifies caching for local files,
-   - --network-caching specifies caching for network resources,
-   - --live-caching specifies caching for capture devices and
-   - --disc-caching specifies caching for local optical media.
-   All values are expressed in milliseconds as in previous versions.
  * HTTP server IP address, port, and TLS configuration is now centralized:
    - The --http-host option sets the address, e.g. "--http-host=2001:db8::1".
      By default, both :: and 0.0.0.0 are used.
@@ -22,10 +16,6 @@ Important notes:
      --http-crl (optional CRL).
  * RTSP server IP address and port are updated similarly.
    Use --rtsp-host and --rtsp-port respectively.
- * The --miface-addr option does not exist anymore. To select the multicast
-   output interface, use --miface instead, e.g. --miface=eth0.
- * The Windows version will only work with Windows XP SP2 or later.
-   Windows 2000 SP4, Windows XP < SP2, Windows 2003 SP0 are now unsupported.
 
 Important changes for packagers:
  * The default builds now assume that the operating system uses UTF-8 for
@@ -37,6 +27,8 @@ Important changes for packagers:
  * The default tarballs are now compressed with XZ/LZMA: .tar.xz
  * OSS support is not compiled on Linux by default, pass --enable-oss to the
    configure script if you use OSSv4 or really want to use OSS emulation.
+ * The Windows version will only work with Windows XP SP2 or later.
+   Windows 2000 SP4, Windows XP < SP2, Windows 2003 SP0 are now unsupported.
 
  * The NPAPI webplugin has moved to git://git.videolan.org/npapi-vlc.git
  * The ActiveX webplugin has moved to git://git.videolan.org/activex-vlc.git
@@ -48,7 +40,6 @@ Core:
  * Almost every video filter can now be transcoded
  * Playback rate doesn't get resetted to 1 between items anymore
  * Option --sub-filter was renamed --sub-source
- * Port to Android, iOS, OS/2 and Win64
 
 Access:
  * Multiple files are now supported inside RAR files
@@ -61,14 +52,11 @@ Access:
  * HTTP Live Streaming (IETF draft) playback support
  * Blackmagic DeckLink SDI cards input support (Linux only currently)
  * Linear Systems (HD-)SDI cards input support (Linux)
- * PulseAudio audio input support
  * RTP: support for dynamic payload types by specifying the payload format
    in an option (no autodetection): only Theora supported for now
  * Basic HTCPCP implementation for Coffee Pot control
  * QTCapture: added support for all QTKit-compatible video input devices
- * QTSound: added support for all QTKit-compatible audio input devices
  * X11 Screen: support for capturing partially hidden windows
- * MPEG DASH (Dynamic Adaptive Streaming over HTTP) support
 
 Codecs:
  * You can now use ffmpeg-mt in conjunction with vlc
@@ -85,7 +73,6 @@ Codecs:
  * EIA-608 closed captions improvements
  * Support for JPEG 2000 and Motion JPEG 2000 in the Windows and Mac binaries
  * Experimental support of IOMX for OpenMAX IL codecs on Android
- * One can use "mp2 " fourcc to encode in mpeg1/2 layer 2
 
 Demuxers:
  * New images demuxer supporting jpeg, png, targa, xcf, git, tiff, bmp, pcx, lbm
@@ -95,20 +82,17 @@ Demuxers:
  * New demuxer module for EBU subtitles (.stl)
  * Support for caf, mtv, awb, f4v, amr, vro (DVD-VR) files
  * Ogg, flv, mxf, amr seeking improvements
- * Major improvements in Matroska (mkv) chapters/segments handling and seeking
- * Support for duration and better seeking in Mpeg-TS files (.ts, .m2ts, .mts)
- * Mov improvements, notably for aspect-ratio handling and Audio DV tracks
- * Improved support of tracker files
+ * Major improvements in Matroska (mkv) chapters/segments handling
 
 Interfaces:
+ * Skins2 / Qt: misc improvements and usability fixes
  * Qt: effects dialogs rework
  * Qt: new CoverFlow-like view of the playlist
  * Qt: port to MacOS X platform
- * Qt: small look improvements
- * Skins2 / Qt: misc improvements and usability fixes
  * Skins2: fullscreen controller support, relative placement support
    and important cleanups and optimisations
- * Mac OS X: re-written Main Window, which also includes the Video Windows
+ * ncurses: heavy refactor of the complete interface
+ * Mac OS X: re-written Main Window, which also includes the Video Output
  * Mac OS X: new Audio Effects panel adding Compressor and Spatializer filters
  * Mac OS X: new Track Synchronization panel
  * Mac OS X: new Video Effects panel for color and geometry adjustments
@@ -116,14 +100,10 @@ Interfaces:
  * Mac OS X: support for the native fullscreen mode on OS X Lion
  * Mac OS X: enhanced AppleScript support
  * The rc and telnet lua interfaces were merged into a new "cli" interface
- * ncurses: heavy refactor of the complete interface
  * dbus: Rewrite of the main loop to use a more efficient poll-based model
  * dbus: Upgrade to an mpris2 compliant interface, see http://www.mpris.org
  * webUI/http: Rewrite of the web interface, using jQuery
  * webUI/http: some requests are now supported in JSON in addition to XML
- * webUI/http: path values for input and output are deprecated in favour of uri
- * Qt/Win32: the update system now downloads the updates in the temp folder
- * Qt: preferences are now searchable
 
 Video Output:
  * New video output based on Direct2D for Windows 7 and Vista (with Platform Update)
@@ -135,18 +115,14 @@ Video Output:
    chroma conversion
  * New video output for Android platform, based on Surface
  * Support for 9/10bits output in the OpenGL output
- * Updated OpenGL video output for Mac, requires a Quartz Extreme capable machine
+ * Updated OpenGL video output for Mac, which requires a Quartz Extreme capable Mac
 
-Audio Output and Filters:
+Audio Output:
  * New audio output based on AudioQueue API for iOS
  * New audio output in memory (amem)
  * Important simplification and improvements in the core audio output
  * New audio output based on OpenSL ES API for Android
- * New audio resampler using Speex (DSP)
  * New audio resampler using the Secret Rabbit Code (a.k.a. libsamplerate)
- * New Compressor filter, a dynamic range compressor
- * New simplistic Karaoke filter
- * New audio output based on kai API for OS/2
 
 Video Filter:
  * New gradfun filter for debanding videos using dithering
@@ -160,10 +136,10 @@ Video Filter:
  * New anti-flickering filter
  * New OpenMAX DL IPCS filter for color space conversion and resizing
  * Major improvements in the freetype text-rendering module, notably supporting
-   blackbox and customizable shadow.
-   NB: The freetype module is now used by default on the Mac OS X instead of
-   the quartztext module, which can still be enabled manually.
-   The Win32 font selection was improved too.
+   blackbox and customizable shadow
+
+Audio Filter:
+ * New Compressor filter, a dynamic range compressor
 
 Stream output:
  * New livehttp-module for HTTP Live Streaming (IETF draft) output
@@ -181,9 +157,8 @@ Stream output:
  * New langfromtelx module, to change lang of one ES, when streaming, based on
    a telextex page: #langfromtelx{id=12,magazine=7,page=0x99,row=1}:std...
  * New select module, to replace an existing ES with another ES in the same track
-   #duplicate{dst=bridge-out{id=1},select=video,dst=bridge-out{id=0xa3},select=audio}
-   #transcode{...}:bridge-in{id-offset=0}:select{disable=0}:setid{id=0,newid=0xa3}:autodel:std{...}
- * New libavformat/avio access_output module for network streaming
+      #duplicate{dst=bridge-out{id=1},select=video,dst=bridge-out{id=0xa3},select=audio}
+      #transcode{...}:bridge-in{id-offset=0}:select{disable=0}:setid{id=0,newid=0xa3}:autodel:std{...}
 
 Services Discovery:
  * Search API to be able to query distant search APIs from the interfaces
@@ -194,8 +169,7 @@ libVLC:
   ** libvlc_media_player_navigate for DVD navigation
   ** libvlc_audio_filter_list_get, libvlc_video_filter_list_get to get the
      list of available audio and video filters
-  ** libvlc_audio_set_format, libvlc_audio_set_format_callbacks,
-     libvlc_audio_set_callbacks
+  ** libvlc_audio_set_format, libvlc_audio_set_format_callbacks, libvlc_audio_set_callbacks
      allow grabbing audio data from a chosen memory location in real-time.
 
 Removed modules:
@@ -211,28 +185,6 @@ Removed modules:
  * removal of the SDL audio output, use the native outputs
  * growl_udp: use Growl for local notifications on the Mac. UDP support will be
               removed in Growl's next release, too.
- * removal of the OSSO screensave module, use the MCE one
-
-
-Changes between 1.1.11 and 1.1.12:
-----------------------------------
-
-Audio outputs:
- * Mac OS X / auhal: multiple fixes for the Digital Audio output (S/PDIF)
-                     including support for OS X Lion
- * Multiple fixes and improved synchronization for PulseAudio support
- * Support for AC-3 and DTS passthrough with PulseAudio 1.0
-
-Unix port:
- * Fix build compatibility with taglib < 1.6 and Xulrunner 1.9.1
-
-Misc:
- * Fix crashes with Japanese locale on OS X
- * Minor fixes for Webplugin under Win32, AVI demuxer, smem and AudioScrobbler
- * Fix crash in HTTP and RTSP server (stream output or Web interface)
-
-Translations:
- * Update of Breton, Chinese Simplified and Basque
 
 
 Changes between 1.1.10 and 1.1.11:
@@ -1005,8 +957,7 @@ Demuxers:
 
 Access:
  * Add extra caching for files on network shares
- * Prevent integer underflow in Real pseudo-RTSP module, discovered by tixxDZ,
-   DZCORE Labs, Algeria
+ * Prevent integer underflow in Real pseudo-RTSP module, discovered by tixxDZ, DZCORE Labs, Algeria
 
 Decoders:
  * Fix seeking in mpeg2 video files
@@ -1031,8 +982,7 @@ Mac OS X Interface:
 Windows port:
  * The ZVBI module is now available for Windows, for complete teletext support
 
-Translations updates for Brazillian, French, German, Korean, Norwegian Nynorsk,
-Lithuanian
+Translations updates for Brazillian, French, German, Korean, Norwegian Nynorsk, Lithuanian
 
 
 Changes between 0.9.10 and 1.0.0:
@@ -2756,8 +2706,7 @@ Core Support:
  * Channel Server support was removed (was deprecated)
 
 Input access:
- * Fixed a big bug in ftp and http access that prevented many platforms
-   (OSX most prominently) to view ftp and http streams.
+ * Fixed a big bug in ftp and http access that prevented many platforms (OSX most prominently) to view ftp and http streams.
  * Fixed large file support on Windows
  * Video 4 Linux support
  * CD Digital Audio support
@@ -2783,8 +2732,7 @@ Interfaces:
  * New HTTP remote control interface
 
 Stream output:
- * New stream output scheme. It is now possible to build a chain of stream outputs
-   allowing for instance to stream and display some content at the same time.
+ * New stream output scheme. It is now possible to build a chain of stream outputs allowing for instance to stream and display some content at the same time.
  * The stream output now allows to transcode content on the fly.
  * Fixed major bug that prevented streaming mpeg 1/2 video with pulldown content.
  * SAP/SDP announcing support. (both IPv4 and IPv6)

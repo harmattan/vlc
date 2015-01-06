@@ -32,13 +32,8 @@
 
 #define CLSCTX_INPROC_SERVER 1
 typedef GUID IID;
-
 #ifndef _REFIID_DEFINED
-# ifdef __cplusplus
-#  define REFIID const IID&
-# else
-#  define REFIID const IID* const
-# endif
+# define REFIID const IID* const
 #endif
 
 const GUID clsid_IApplication2 = { 0x1968106d,0xf3b5,0x44cf,{0x89,0x0e,0x11,0x6f,0xcb,0x9e,0xce,0xf1}};

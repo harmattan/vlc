@@ -968,60 +968,62 @@ char *str_format( vlc_object_t *p_this, const char *psz_src )
 }
 
 /**
- * Remove forbidden, potentially forbidden and otherwise evil characters from
- * filenames. This includes slashes, and popular characters like colon
- * (on Unix anyway), so this should only be used for automatically generated
- * filenames.
- * \warning Do not use this on full paths,
- * only single file names without any directory separator!
+ * Remove forbidden characters from filenames (including slashes)
  */
 void filename_sanitize( char *str )
 {
-    unsigned char c;
+#if defined( WIN32 ) || defined( __OS2__ )
+    char *str_base = str;
+#endif
 
-    /* Special file names, not allowed */
-    if( !strcmp( str, "." ) || !strcmp( str, ".." ) )
+    if( *str == '.' && (str[1] == '\0' || (str[1] == '.' && str[2] == '\0' ) ) )
     {
         while( *str )
-            *(str++) = '_';
+        {
+            *str = '_';
+            str++;
+        }
         return;
     }
 
-    /* On platforms not using UTF-7, VLC cannot access non-Unicode paths.
-     * Also, some file systems require Unicode file names.
-     * NOTE: This may inserts '?' thus is done replacing '?' with '_'. */
-    EnsureUTF8( str );
+#if defined( WIN32 ) || defined( __OS2__ )
+    // Change leading spaces into underscores
+    while( *str && *str == ' ' )
+        *str++ = '_';
+#endif
 
-    /* Avoid leading spaces to please Windows. */
-    while( (c = *str) != '\0' )
+    while( *str )
     {
-        if( c != ' ' )
-            break;
-        *(str++) = '_';
-    }
-
-    char *start = str;
-
-    while( (c = *str) != '\0' )
-    {
-        /* Non-printable characters are not a good idea */
-        if( c < 32 )
-            *str = '_';
-        /* This is the list of characters not allowed by Microsoft.
-         * We also black-list them on Unix as they may be confusing, and are
-         * not supported by some file system types (notably CIFS). */
-        else if( strchr( "/:\\*\"?|<>", c ) != NULL )
-            *str = '_';
+        switch( *str )
+        {
+            case '/':
+#if defined( __APPLE__ )
+            case ':':
+#elif defined( WIN32 ) || defined( __OS2__ )
+            case '\\':
+            case '*':
+            case '"':
+            case '?':
+            case ':':
+            case '|':
+            case '<':
+            case '>':
+#endif
+                *str = '_';
+        }
         str++;
     }
 
-    /* Avoid trailing spaces also to please Windows. */
-    while( str > start )
+#if defined( WIN32 ) || defined( __OS2__ )
+    // Change trailing spaces into underscores
+    str--;
+    while( str != str_base )
     {
-        if( *(--str) != ' ' )
+        if( *str != ' ' )
             break;
-        *str = '_';
+        *str-- = '_';
     }
+#endif
 }
 
 /**
@@ -1075,17 +1077,6 @@ char *make_URI (const char *path, const char *scheme)
      * scheme name (such as mailto: or news:). */
 
     char *buf;
-
-#ifdef __OS2__
-    char p[strlen (path) + 1];
-
-    for (buf = p; *path; buf++, path++)
-        *buf = (*path == '/') ? DIR_SEP_CHAR : *path;
-    *buf = '\0';
-
-    path = p;
-#endif
-
 #if defined( WIN32 ) || defined( __OS2__ )
     /* Drive letter */
     if (isalpha ((unsigned char)path[0]) && (path[1] == ':'))

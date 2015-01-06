@@ -737,7 +737,7 @@ void ExtV4l2::Refresh( void )
                     if( i_type & VLC_VAR_HASCHOICE )
                     {
                         QComboBox *combobox = new QComboBox( box );
-                        combobox->setObjectName( qfu( psz_var ) );
+                        combobox->setObjectName( qtr( psz_var ) );
 
                         vlc_value_t val2, text2;
                         var_Change( p_obj, psz_var, VLC_VAR_GETCHOICES,
@@ -757,40 +757,25 @@ void ExtV4l2::Refresh( void )
                         hlayout->addWidget( combobox );
                     }
                     else
-                    if( (i_type & VLC_VAR_HASMIN) && (i_type & VLC_VAR_HASMAX) )
                     {
                         QSlider *slider = new QSlider( box );
-                        slider->setObjectName( qfu( psz_var ) );
+                        slider->setObjectName( qtr( psz_var ) );
                         slider->setOrientation( Qt::Horizontal );
                         vlc_value_t val2;
                         var_Change( p_obj, psz_var, VLC_VAR_GETMIN,
                                     &val2, NULL );
-                        if( val2.i_int < INT_MIN )
-                            val2.i_int = INT_MIN; /* FIXME */
                         slider->setMinimum( val2.i_int );
                         var_Change( p_obj, psz_var, VLC_VAR_GETMAX,
                                     &val2, NULL );
-                        if( val2.i_int > INT_MAX )
-                            val2.i_int = INT_MAX; /* FIXME */
                         slider->setMaximum( val2.i_int );
-                        if( !var_Change( p_obj, psz_var, VLC_VAR_GETSTEP,
-                                         &val2, NULL ) )
-                            slider->setSingleStep( val2.i_int );
+                        var_Change( p_obj, psz_var, VLC_VAR_GETSTEP,
+                                    &val2, NULL );
+                        slider->setSingleStep( val2.i_int );
                         slider->setValue( i_val );
+
                         CONNECT( slider, valueChanged( int ), this,
                                  ValueChange( int ) );
                         hlayout->addWidget( slider );
-                    }
-                    else
-                    {
-                        QSpinBox *spinBox = new QSpinBox( box );
-                        spinBox->setObjectName( qfu( psz_var ) );
-                        spinBox->setMinimum( INT_MIN );
-                        spinBox->setMaximum( INT_MAX );
-                        spinBox->setValue( i_val );
-                        CONNECT( spinBox, valueChanged( int ), this,
-                                 ValueChange( int ) );
-                        hlayout->addWidget( spinBox );
                     }
                     layout->addLayout( hlayout );
                     break;
@@ -798,7 +783,7 @@ void ExtV4l2::Refresh( void )
                 case VLC_VAR_BOOL:
                 {
                     QCheckBox *button = new QCheckBox( name, box );
-                    button->setObjectName( qfu( psz_var ) );
+                    button->setObjectName( qtr( psz_var ) );
                     button->setChecked( var_GetBool( p_obj, psz_var ) );
 
                     CONNECT( button, clicked( bool ), this,
@@ -811,7 +796,7 @@ void ExtV4l2::Refresh( void )
                     if( i_type & VLC_VAR_ISCOMMAND )
                     {
                         QPushButton *button = new QPushButton( name, box );
-                        button->setObjectName( qfu( psz_var ) );
+                        button->setObjectName( qtr( psz_var ) );
 
                         CONNECT( button, clicked( bool ), this,
                                  ValueChange( bool ) );
@@ -1507,7 +1492,6 @@ void SyncWidget::valueChangedHandler( double d )
         spinLabel.setText( qtr("(Delayed)") );
     else
         spinLabel.setText( "" );
-    emit valueChanged( d );
 }
 
 void SyncWidget::setValue( double d )

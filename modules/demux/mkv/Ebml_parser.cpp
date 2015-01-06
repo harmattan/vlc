@@ -29,16 +29,20 @@
 /*****************************************************************************
  * Ebml Stream parser
  *****************************************************************************/
-EbmlParser::EbmlParser( EbmlStream *es, EbmlElement *el_start, demux_t *p_demux ) :
-    m_es( es ),
-    mi_level( 1 ),
-    m_got( NULL ),
-    mi_user_level( 1 ),
-    mb_keep( false )
+EbmlParser::EbmlParser( EbmlStream *es, EbmlElement *el_start, demux_t *p_demux )
 {
-    mi_remain_size[0] = el_start->GetSize();
-    memset( m_el, 0, 6 * sizeof( *m_el ) );
+    m_es = es;
+    m_got = NULL;
     m_el[0] = el_start;
+    mi_remain_size[0] = el_start->GetSize();
+
+    for( int i = 1; i < 6; i++ )
+    {
+        m_el[i] = NULL;
+    }
+    mi_level = 1;
+    mi_user_level = 1;
+    mb_keep = false;
     mb_dummy = var_InheritBool( p_demux, "mkv-use-dummy" );
 }
 
@@ -72,17 +76,12 @@ EbmlElement* EbmlParser::UnGet( uint64 i_block_pos, uint64 i_cluster_pos )
             mi_user_level--;
         }
     }
-
-    /* Avoid data skip in BlockGet */
-    delete m_el[mi_level];
-    m_el[mi_level] = NULL;
-
     m_got = NULL;
     mb_keep = false;
     if ( m_el[1] && m_el[1]->GetElementPosition() == i_cluster_pos )
     {
         m_es->I_O().setFilePointer( i_block_pos, seek_beginning );
-        return m_el[1];
+        return (EbmlMaster*) m_el[1];
     }
     else
     {
@@ -117,7 +116,7 @@ void EbmlParser::Keep( void )
     mb_keep = true;
 }
 
-int EbmlParser::GetLevel( void ) const
+int EbmlParser::GetLevel( void )
 {
     return mi_user_level;
 }
@@ -165,8 +164,7 @@ EbmlElement *EbmlParser::Get( void )
     }
     vlc_stream_io_callback & io_stream = (vlc_stream_io_callback &) m_es->I_O();
     uint64 i_size = io_stream.toRead();
-    m_el[mi_level] = m_es->FindNextElement( EBML_CONTEXT(m_el[mi_level - 1]),
-                                            i_ulev, i_size, mb_dummy, 1 );
+    m_el[mi_level] = m_es->FindNextElement( EBML_CONTEXT(m_el[mi_level - 1]), i_ulev, i_size, mb_dummy != 0, 1 );
 //    mi_remain_size[mi_level] = m_el[mi_level]->GetSize();
     if( i_ulev > 0 )
     {
@@ -195,7 +193,7 @@ EbmlElement *EbmlParser::Get( void )
     return m_el[mi_level];
 }
 
-bool EbmlParser::IsTopPresent( EbmlElement *el ) const
+bool EbmlParser::IsTopPresent( EbmlElement *el )
 {
     for( int i = 0; i < mi_level; i++ )
     {

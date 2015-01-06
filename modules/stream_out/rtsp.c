@@ -43,7 +43,6 @@
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <time.h>
 
 #ifndef WIN32
 # include <locale.h>
@@ -122,13 +121,8 @@ rtsp_stream_t *RtspSetup( vlc_object_t *owner, vod_media_t *media,
     if( rtsp->host == NULL )
         goto error;
 
-    char *user = var_InheritString(owner, "sout-rtsp-user");
-    char *pwd = var_InheritString(owner, "sout-rtsp-pwd");
-
     rtsp->url = httpd_UrlNewUnique( rtsp->host, rtsp->psz_path,
-                                    user, pwd, NULL );
-    free(user);
-    free(pwd);
+                                    NULL, NULL, NULL );
     if( rtsp->url == NULL )
         goto error;
 
@@ -254,13 +248,7 @@ rtsp_stream_id_t *RtspAddId( rtsp_stream_t *rtsp, sout_stream_id_t *sid,
     }
 
     msg_Dbg( rtsp->owner, "RTSP: adding %s", urlbuf );
-
-    char *user = var_InheritString(rtsp->owner, "sout-rtsp-user");
-    char *pwd = var_InheritString(rtsp->owner, "sout-rtsp-pwd");
-
-    url = id->url = httpd_UrlNewUnique( rtsp->host, urlbuf, user, pwd, NULL );
-    free( user );
-    free( pwd );
+    url = id->url = httpd_UrlNewUnique( rtsp->host, urlbuf, NULL, NULL, NULL );
     free( urlbuf );
 
     if( url == NULL )

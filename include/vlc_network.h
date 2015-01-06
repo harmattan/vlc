@@ -65,7 +65,12 @@ struct msghdr
 #   endif
 #else
 #   include <sys/socket.h>
-#   include <netinet/in.h>
+#   ifdef HAVE_NETINET_IN_H
+#      include <netinet/in.h>
+#   endif
+#   ifdef HAVE_ARPA_INET_H
+#      include <arpa/inet.h>
+#   endif
 #   include <netdb.h>
 #   define net_errno errno
 #endif
@@ -158,6 +163,9 @@ VLC_API ssize_t net_Printf( vlc_object_t *p_this, int fd, const v_socket_t *, co
 VLC_API ssize_t net_vaPrintf( vlc_object_t *p_this, int fd, const v_socket_t *, const char *psz_fmt, va_list args );
 #define net_vaPrintf(a,b,c,d,e) net_vaPrintf(VLC_OBJECT(a),b,c,d,e)
 
+VLC_API int vlc_inet_pton(int af, const char *src, void *dst);
+VLC_API const char *vlc_inet_ntop(int af, const void *src,
+                                  char *dst, socklen_t cnt);
 struct pollfd;
 VLC_API int vlc_poll(struct pollfd *fds, unsigned nfds, int timeout);
 
@@ -169,11 +177,9 @@ VLC_API int vlc_poll(struct pollfd *fds, unsigned nfds, int timeout);
 # define SHUT_RDWR SD_BOTH
 # define net_Close( fd ) closesocket ((SOCKET)fd)
 #else
-# ifdef __OS2__
-#  define SHUT_RD    0
-#  define SHUT_WR    1
-#  define SHUT_RDWR  2
-# endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 # define net_Close( fd ) (void)close (fd)
 #endif
 

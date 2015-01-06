@@ -1,7 +1,7 @@
 /*****************************************************************************
- * CompatibilityFixes.h: MacOS X interface module
+ * sdkfixes.h: MacOS X interface module
  *****************************************************************************
- * Copyright (C) 2011 VLC authors and VideoLAN
+ * Copyright (C) 2011 VideoLAN
  * $Id$
  *
  * Authors: Felix Paul Kühne <fkuehne -at- videolan -dot- org>
@@ -77,8 +77,6 @@ enum {
 @interface NSWindow (IntroducedInLion)
 - (void)setRestorable:(BOOL)b_value;
 - (void)toggleFullScreen:(id)id_value;
-- (void)windowWillEnterFullScreen:(NSNotification *)notification;
-- (void)windowWillExitFullScreen:(NSNotification *)notification;
 @end
 
 @interface NSEvent (IntroducedInLion)

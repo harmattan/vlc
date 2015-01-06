@@ -67,7 +67,6 @@ pluginsinclude_HEADERS = \
 	../include/vlc_modules.h \
 	../include/vlc_mouse.h \
 	../include/vlc_mtime.h \
-	../include/vlc_network.h \
 	../include/vlc_objects.h \
 	../include/vlc_picture.h \
 	../include/vlc_picture_fifo.h \
@@ -85,7 +84,6 @@ pluginsinclude_HEADERS = \
 	../include/vlc_subpicture.h \
 	../include/vlc_text_style.h \
 	../include/vlc_threads.h \
-	../include/vlc_tls.h \
 	../include/vlc_url.h \
 	../include/vlc_variables.h \
 	../include/vlc_vlm.h \
@@ -109,8 +107,10 @@ noinst_HEADERS = \
 	../include/vlc_iso_lang.h \
 	../include/vlc_keys.h \
 	../include/vlc_memory.h \
+	../include/vlc_network.h \
 	../include/vlc_osd.h \
 	../include/vlc_pgpkey.h \
+	../include/vlc_tls.h \
 	../include/vlc_update.h \
 	../include/vlc_vod.h \
 	../include/vlc_vout_wrapper.h \
@@ -197,7 +197,6 @@ EXTRA_libvlccore_la_SOURCES = \
 	$(SOURCES_libvlc_darwin) \
 	$(SOURCES_libvlc_linux) \
 	$(SOURCES_libvlc_win32) \
-	$(SOURCES_libvlc_os2) \
 	$(SOURCES_libvlc_other) \
 	$(SOURCES_libvlc_httpd) \
 	$(SOURCES_libvlc_sout) \
@@ -218,11 +217,7 @@ else
 if HAVE_SYMBIAN
 #libvlccore_la_SOURCES += $(SOURCES_libvlc_symbian)
 else
-if HAVE_OS2
-libvlccore_la_SOURCES += $(SOURCES_libvlc_os2)
-else
 libvlccore_la_SOURCES += $(SOURCES_libvlc_other)
-endif
 endif
 endif
 endif
@@ -274,15 +269,6 @@ SOURCES_libvlc_symbian = \
 	symbian/dirs.c \
 	misc/atomic.c \
 	win32/plugin.c \
-	$(NULL)
-
-SOURCES_libvlc_os2 = \
-	os2/dirs.c \
-	misc/atomic.c \
-	posix/filesystem.c \
-	posix/plugin.c \
-	os2/thread.c \
-	os2/specific.c \
 	$(NULL)
 
 SOURCES_libvlc_other = \
@@ -479,6 +465,19 @@ SOURCES_libvlc_vlm = \
 SOURCES_libvlc = \
 	$(SOURCES_libvlc_common) \
 	$(NULL)
+
+###############################################################################
+# libvlc pulse
+###############################################################################
+
+if HAVE_PULSE
+pkglib_LTLIBRARIES = libvlcpulse.la
+endif
+
+libvlcpulse_la_SOURCES = pulse/mainloop.c ../include/vlc_pulse.h
+libvlcpulse_la_CPPFLAGS = $(PULSE_CFLAGS)
+libvlcpulse_la_LIBADD = $(PULSE_LIBS) libvlccore.la
+libvlcpulse_la_LDFLAGS = -export-symbols-regex ^vlc_pa_ -no-undefined
 
 ###############################################################################
 # GIT revision

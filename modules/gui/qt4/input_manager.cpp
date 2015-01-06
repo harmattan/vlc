@@ -462,8 +462,6 @@ void InputManager::UpdateRate()
 
 void InputManager::UpdateName()
 {
-    assert( p_input );
-
     /* Update text, name and nowplaying */
     QString name;
 
@@ -691,7 +689,6 @@ void InputManager::UpdateArt()
 
 inline void InputManager::UpdateStats()
 {
-    assert( p_input );
     emit statisticsUpdated( input_GetItem( p_input ) );
 }
 
@@ -702,13 +699,11 @@ inline void InputManager::UpdateMeta( input_item_t *p_item )
 
 inline void InputManager::UpdateMeta()
 {
-    assert( p_input );
     emit currentMetaChanged( input_GetItem( p_input ) );
 }
 
 inline void InputManager::UpdateInfo()
 {
-    assert( p_input );
     emit infoChanged( input_GetItem( p_input ) );
 }
 
@@ -887,7 +882,7 @@ void InputManager::setRate( int new_rate )
 void InputManager::jumpFwd()
 {
     int i_interval = var_InheritInteger( p_input, "short-jump-size" );
-    if( i_interval > 0 && hasInput() )
+    if( i_interval > 0 )
     {
         mtime_t val = CLOCK_FREQ * i_interval;
         var_SetTime( p_input, "time-offset", val );
@@ -897,7 +892,7 @@ void InputManager::jumpFwd()
 void InputManager::jumpBwd()
 {
     int i_interval = var_InheritInteger( p_input, "short-jump-size" );
-    if( i_interval > 0 && hasInput() )
+    if( i_interval > 0 )
     {
         mtime_t val = -CLOCK_FREQ * i_interval;
         var_SetTime( p_input, "time-offset", val );

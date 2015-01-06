@@ -172,6 +172,7 @@ struct module_config_t
     char          **ppsz_action_text;         /* Friendly names for actions */
 
     /* Deprecated */
+    char        *psz_oldname;                          /* Old option name */
     bool        b_removed;
 };
 

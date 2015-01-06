@@ -105,7 +105,7 @@ vlc_module_begin ()
 #endif
     add_integer( "projectm-width", 800, WIDTH_TEXT, WIDTH_LONGTEXT,
                  false )
-    add_integer( "projectm-height", 500, HEIGHT_TEXT, HEIGHT_LONGTEXT,
+    add_integer( "projectm-height", 640, HEIGHT_TEXT, HEIGHT_LONGTEXT,
                  false )
     add_integer( "projectm-meshx", 32, MESHX_TEXT, MESHX_LONGTEXT,
                  false )
@@ -349,7 +349,6 @@ static void *Thread( void *p_data )
     gl = vout_GetDisplayOpengl( p_sys->p_vd );
     if( !gl )
     {
-        var_DelCallback( p_sys->p_vout, "fullscreen", VoutCallback, p_sys->p_vd );
         vout_DeleteDisplay( p_sys->p_vd, NULL );
         vlc_object_release( p_sys->p_vout );
         goto error;
@@ -442,7 +441,6 @@ static void *Thread( void *p_data )
             vlc_mutex_unlock( &p_sys->lock );
 
             delete p_projectm;
-            var_DelCallback( p_sys->p_vout, "fullscreen", VoutCallback, p_sys->p_vd );
             vout_DeleteDisplay( p_sys->p_vd, NULL );
             vlc_object_release( p_sys->p_vout );
             if (loc != (locale_t)0)

@@ -1,7 +1,7 @@
 /*****************************************************************************
  * MainWindow.h: MacOS X interface module
  *****************************************************************************
- * Copyright (C) 2002-2011 VLC authors and VideoLAN
+ * Copyright (C) 2002-2011 VideoLAN
  * $Id$
  *
  * Authors: Felix Paul Kühne <fkuehne -at- videolan -dot- org>
@@ -1397,29 +1397,16 @@ static VLCMainWindow *_o_sharedInstance = nil;
                                [NSValue valueWithRect:args->frame], NSViewAnimationEndFrameKey, nil];
 
         NSViewAnimation * anim = [[NSViewAnimation alloc] initWithViewAnimations:[NSArray arrayWithObject:dict]];
+        [dict release];
 
         [anim setAnimationBlockingMode: NSAnimationNonblocking];
         [anim setDuration: 0.4];
         [anim setFrameRate: 30];
         [anim startAnimation];
-
-        [anim release];
     }
     else {
         [super setFrame:args->frame display:args->display animate:args->animate];
     }
-}
-
-#pragma mark -
-#pragma mark Lion's native fullscreen handling
-- (void)windowWillEnterFullScreen:(NSNotification *)notification
-{
-    [NSCursor setHiddenUntilMouseMoves: YES];
-}
-
-- (void)windowWillExitFullScreen:(NSNotification *)notification
-{
-    [NSCursor setHiddenUntilMouseMoves: NO];
 }
 
 #pragma mark -

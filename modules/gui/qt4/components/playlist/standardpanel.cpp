@@ -82,11 +82,11 @@ StandardPLPanel::StandardPLPanel( PlaylistWidget *_parent,
     DCONNECT( THEMIM, leafBecameParent( int ),
               this, browseInto( int ) );
 
-    CONNECT( model, currentIndexChanged( const QModelIndex& ),
+    CONNECT( model, currentChanged( const QModelIndex& ),
              this, handleExpansion( const QModelIndex& ) );
-    CONNECT( model, rootIndexChanged(), this, browseInto() );
+    CONNECT( model, rootChanged(), this, browseInto() );
 
-    setRootItem( p_root, false );
+    setRoot( p_root, false );
 }
 
 StandardPLPanel::~StandardPLPanel()
@@ -179,7 +179,7 @@ void StandardPLPanel::searchDelayed( const QString& searchText )
 
 /* Set the root of the new Playlist */
 /* This activated by the selector selection */
-void StandardPLPanel::setRootItem( playlist_item_t *p_item, bool b )
+void StandardPLPanel::setRoot( playlist_item_t *p_item, bool b )
 {
 #ifdef MEDIA_LIBRARY
     if( b )

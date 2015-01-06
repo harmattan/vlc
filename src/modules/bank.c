@@ -426,17 +426,10 @@ static void AllocatePluginDir (module_bank_t *bank, unsigned maxdepth,
             static const char suffix[] = "_plugin"LIBEXT;
             size_t len = strlen (file);
 
-#ifndef __OS2__
             /* Check that file matches the "lib*_plugin"LIBEXT pattern */
             if (len > strlen (suffix)
              && !strncmp (file, prefix, strlen (prefix))
              && !strcmp (file + len - strlen (suffix), suffix))
-#else
-            /* We load all the files ending with LIBEXT on OS/2,
-             * because OS/2 has a 8.3 length limitation for DLL name */
-            if (len > strlen (LIBEXT)
-             && !strcasecmp (file + len - strlen (LIBEXT), LIBEXT))
-#endif
                 AllocatePluginFile (bank, abspath, relpath, &st);
         }
         else if (S_ISDIR (st.st_mode))
@@ -499,8 +492,6 @@ static int AllocatePluginFile (module_bank_t *bank, const char *abspath,
              /* !unloadable not allowed for plugins with callbacks */
              vlc_module_destroy (module);
              module = module_InitDynamic (bank->obj, abspath, false);
-             if (unlikely(module == NULL))
-                 return -1;
              break;
          }
 
@@ -511,13 +502,6 @@ static int AllocatePluginFile (module_bank_t *bank, const char *abspath,
     /* TODO: deal with errors */
     return  0;
 }
-
-#ifdef __OS2__
-#   define EXTERN_PREFIX "_"
-#else
-#   define EXTERN_PREFIX
-#endif
-
 
 /**
  * Loads a dynamically-linked plug-in into memory and initialize it.
@@ -537,7 +521,7 @@ static module_t *module_InitDynamic (vlc_object_t *obj, const char *path,
         return NULL;
 
     /* Try to resolve the symbol */
-    static const char entry_name[] = EXTERN_PREFIX "vlc_entry" MODULE_SUFFIX;
+    static const char entry_name[] = "vlc_entry" MODULE_SUFFIX;
     vlc_plugin_cb entry =
         (vlc_plugin_cb) module_Lookup (handle, entry_name);
     if (entry == NULL)

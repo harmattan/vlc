@@ -203,19 +203,7 @@ int OpenEncoder( vlc_object_t *p_this )
     char *psz_val;
     int i_val;
 
-    if( p_enc->fmt_out.i_codec == VLC_CODEC_MP3 )
-    {
-        i_cat = AUDIO_ES;
-        i_codec_id = CODEC_ID_MP3;
-        psz_namecodec = "MPEG I/II Layer 3";
-    }
-    else if( p_enc->fmt_out.i_codec == VLC_CODEC_MP2 )
-    {
-        i_cat = AUDIO_ES;
-        i_codec_id = CODEC_ID_MP2;
-        psz_namecodec = "MPEG I/II Layer 2";
-    }
-    else if( !GetFfmpegCodec( p_enc->fmt_out.i_codec, &i_cat, &i_codec_id,
+    if( !GetFfmpegCodec( p_enc->fmt_out.i_codec, &i_cat, &i_codec_id,
                              &psz_namecodec ) )
     {
         if( TestFfmpegChroma( -1, p_enc->fmt_out.i_codec ) != VLC_SUCCESS )
@@ -414,17 +402,6 @@ int OpenEncoder( vlc_object_t *p_this )
 
         p_context->time_base.num = p_enc->fmt_in.video.i_frame_rate_base;
         p_context->time_base.den = p_enc->fmt_in.video.i_frame_rate;
-        if( p_codec->supported_framerates )
-        {
-            AVRational target = {
-                .num = p_enc->fmt_in.video.i_frame_rate,
-                .den = p_enc->fmt_in.video.i_frame_rate_base,
-            };
-            int idx = av_find_nearest_q_idx(target, p_codec->supported_framerates);
-
-            p_context->time_base.num = p_codec->supported_framerates[idx].den;
-            p_context->time_base.den = p_codec->supported_framerates[idx].num;
-        }
 
         /* Defaults from ffmpeg.c */
         p_context->qblur = 0.5;

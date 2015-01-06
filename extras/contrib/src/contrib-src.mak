@@ -122,6 +122,19 @@ HOSTCONF+= --without-pic --disable-shared
 endif
 
 
+ifdef HAVE_LINUX
+ifdef HAVE_MAEMO
+# Really, this could be done on all Linux platforms, not just Maemo.
+# Installing statically-linked VLC plugins is so much simpler.
+HOSTCONF += --with-pic --disable-shared
+endif
+endif
+
+
+ifdef HAVE_ISA_THUMB
+NOTHUMB ?= -mno-thumb
+endif
+
 DATE=`date +%Y-%m-%d`
 
 # ***************************************************************************
@@ -847,8 +860,8 @@ VPX_TARGET-$(ENABLED)              = --target=FIXME
 VPX_TARGET-$(HAVE_LINUX)           =
 VPX_TARGET-$(HAVE_WIN32)           = --target=x86-win32-gcc
 VPX_TARGET-$(HAVE_DARWIN_OS)       = --target=ppc32-darwin9-gcc
-VPX_TARGET-$(HAVE_MACOSX_ON_INTEL) = --target=x86-darwin10-gcc
-VPX_TARGET-$(HAVE_MACOSX64)        = --target=x86_64-darwin10-gcc
+VPX_TARGET-$(HAVE_MACOSX_ON_INTEL) = --target=x86-darwin9-gcc
+VPX_TARGET-$(HAVE_MACOSX64)        = --target=x86_64-darwin9-gcc
 VPX_DEPS-$(ENABLED)                =
 VPX_DEPS-$(HAVE_MACOSX_ON_INTEL) += .yasm
 
@@ -872,9 +885,6 @@ lame-$(LAME_VERSION).tar.gz:
 
 lame: lame-$(LAME_VERSION).tar.gz
 	$(EXTRACT_GZ)
-ifdef HAVE_WIN64
-	patch -p0 < Patches/lame-win64.patch
-endif
 
 .lame: lame
 	(cd $<; $(HOSTCC) ./configure $(HOSTCONF) --prefix=$(PREFIX) --disable-analyser-hooks --disable-decoder --disable-shared --disable-gtktest --disable-frontend && make && make install)
@@ -951,7 +961,6 @@ FFMPEGCONF += --enable-cross-compile
 endif
 
 ifdef HAVE_CROSS_COMPILE_NEEDS_CROSS_PREFIX
-ifndef HAVE_MACOSX
 ifndef HAVE_ANDROID
 ifndef HAVE_SYMBIAN
 FFMPEGCONF += --cross-prefix=$(HOST)-
@@ -962,7 +971,6 @@ endif
 else
 FFMPEGCONF += --cross-prefix=arm-linux-androideabi- --arch=armv6
 FFMPEGCONF += $(FFMPEGCONFSMALL)
-endif
 endif
 endif
 
@@ -994,12 +1002,12 @@ endif
 
 ifdef HAVE_MACOSX32
 FFMPEGCONF += --enable-libvpx
-FFMPEGCONF += --cc=clang
+FFMPEGCONF += --cc=gcc-4.2
 endif
 
 ifdef HAVE_MACOSX64
 FFMPEGCONF += --enable-libvpx
-FFMPEGCONF += --cc=clang
+FFMPEGCONF += --cc=gcc-4.2
 FFMPEGCONF += --cpu=core2
 endif
 
@@ -1019,6 +1027,12 @@ endif #IOS
 # Linux
 ifdef HAVE_LINUX
 FFMPEGCONF += --target-os=linux --enable-pic
+endif
+
+ifdef HAVE_MAEMO
+ifneq ($(filter -m%=cortex-a8, $(EXTRA_CFLAGS)),)
+FFMPEGCONF += $(FFMPEGCONFNEON)
+endif
 endif
 
 ifdef HAVE_ANDROID
@@ -1070,6 +1084,9 @@ ifdef GIT
 
 ffmpeg:
 	$(GIT) clone $(FFMPEG_GIT)
+ifdef HAVE_ISA_THUMB
+	patch -p0 < Patches/ffmpeg-avcodec-no-thumb.patch
+endif
 ifdef HAVE_UCLIBC
 	patch -p0 < Patches/ffmpeg-svn-uclibc.patch
 	patch -p0 < Patches/ffmpeg-svn-internal-define.patch
@@ -1152,11 +1169,8 @@ DISTCLEAN_PKG += libdvdcss-$(LIBDVDCSS_VERSION).tar.bz2
 # ***************************************************************************
 # libdvdread: We use dvdnav's dvdread
 # ***************************************************************************
-libdvdread-$(LIBDVDREAD_VERSION).tar.bz2:
-	$(WGET) $(LIBDVDREAD_URL)
-
-libdvdread: libdvdread-$(LIBDVDREAD_VERSION).tar.bz2
-	$(EXTRACT_BZ2)
+libdvdread:
+	$(SVN) co -r $(LIBDVDREAD_SVN_REV) $(LIBDVDREAD_SVN)  libdvdread
 	(cd $@; patch  -p 0 < ../Patches/libdvdread-dvdcss-static.patch)
 ifdef HAVE_WIN32
 	(cd $@; patch  -p 0 < ../Patches/libdvdread-win32.patch)
@@ -1170,19 +1184,29 @@ endif
 
 CLEAN_FILE += .libdvdread
 CLEAN_PKG += libdvdread
-DISTCLEAN_PKG += libdvdread-$(LIBDVDREAD_VERSION).tar.bz2
+#DISTCLEAN_PKG += libdvdread-$(LIBDVDREAD_VERSION).tar.gz
 
 # ***************************************************************************
 # libdvdnav
 # ***************************************************************************
 
-libdvdnav-$(LIBDVDNAV_VERSION).tar.bz2:
+ifdef SVN
+libdvdnav:
+	$(SVN) co -r $(LIBDVDNAV_SVN_REV) $(LIBDVDNAV_SVN)  libdvdnav
+	patch -d libdvdnav -p0 < Patches/libdvdnav.patch
+	(cd $@; ./autogen.sh noconfig)
+else
+libdvdnav-$(LIBDVDNAV_VERSION).tar.gz:
 	$(WGET) $(LIBDVDNAV_URL)
 
-libdvdnav: libdvdnav-$(LIBDVDNAV_VERSION).tar.bz2
-	$(EXTRACT_BZ2)
+libdvdnav: libdvdnav-$(LIBDVDNAV_VERSION).tar.gz
+	$(EXTRACT_GZ)
 	patch -p0 < Patches/libdvdnav.patch
+ifdef HAVE_WIN32
+	patch -p0 < Patches/libdvdnav-win32.patch
+endif
 	(cd $@; ./autogen.sh noconfig)
+endif
 
 .dvdnav: libdvdnav .libdvdread
 ifdef HAVE_WIN32
@@ -1258,7 +1282,7 @@ LIVE_TARGET-$(HAVE_WIN32)     = mingw
 LIVE_TARGET-$(HAVE_WINCE)     = mingw
 LIVE_TARGET-$(HAVE_DARWIN_OS) = macosx
 
-ifeq ($(ARCH),armel)
+ifeq ($(ARCH)$(HAVE_MAEMO),armel)
 LIVE_TARGET-$(ENABLED)        = armlinux
 endif
 
@@ -1272,7 +1296,7 @@ LIVE_PATCH-$(HAVE_DARWIN_OS) = sed -e 's%-DBSD=1%-DBSD=1\ $(EXTRA_CFLAGS)\ $(EXT
 LIVE_PATCH-$(HAVE_LINUX)     = sed -e 's/=/= EXTRA_CPPFLAGS/' -e 's%EXTRA_CPPFLAGS%-I/include%' -i.orig groupsock/Makefile.head
 
 ifndef HAVE_UCLIBC
-ifneq ($(ARCH),armel)
+ifneq ($(ARCH)$(HAVE_MAEMO),armel)
 LIVE_PATCH-$(HAVE_LINUX)    += ; sed -e 's%-D_FILE_OFFSET_BITS=64%-D_FILE_OFFSET_BITS=64\ -fPIC\ -DPIC%' -i.orig config.linux
 endif
 endif
@@ -1803,8 +1827,8 @@ libgpg-error-$(GPGERROR_VERSION).tar.bz2:
 libgpg-error: libgpg-error-$(GPGERROR_VERSION).tar.bz2
 	$(EXTRACT_BZ2)
 ifdef HAVE_WIN32
-	patch -p 0 < Patches/libgpg-error-win32.patch
-	(cd $@; autoreconf -ivf)
+#	patch -p 0 < Patches/libgpg-error-win32.patch
+#	(cd $@; ./autogen.sh)
 endif
 
 .gpg-error: libgpg-error
@@ -2361,8 +2385,8 @@ libass: libass-$(ASS_VERSION).tar.gz
 	$(EXTRACT_GZ)
 	(cd $@; autoreconf -ivf)
 
-.libass: libass .freetype .fontconfig .fribidi
-	(cd $<; $(HOSTCC) ./configure --disable-shared $(HOSTCONF) --prefix=$(PREFIX) CFLAGS="$(CFLAGS) -O3" && make && make install)
+.libass: libass .freetype .fontconfig
+	(cd $<; $(HOSTCC) ./configure --disable-png --disable-shared $(HOSTCONF) --prefix=$(PREFIX) CFLAGS="$(CFLAGS) -O3" && make && make install)
 	touch $@
 
 CLEAN_FILE += .libass

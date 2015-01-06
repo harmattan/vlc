@@ -1,4 +1,4 @@
-List of vlc plugins (384)
+List of vlc plugins (379)
 $Id$
  * a52: A/52 basic parser/packetizer
  * a52tofloat32: A/52 audio converter & decoder plugin, using liba52
@@ -6,7 +6,7 @@ $Id$
  * aa: Ascii art video output
  * access_alsa: Alsa access module
  * access_attachment: Attachment access module
- * access_avio: Access and Stream output module using libavformat network
+ * access_avio: Access module using FFmpeg libavformat network
  * access_bd: Blu-Ray Disc access
  * access_directory: Access module to read files in a directory
  * access_dv: Raw1394 Digital Video (Firewire/IEEE1394/I-Link) access module
@@ -58,9 +58,9 @@ $Id$
  * audioqueue: Audio Output based on AudioQueue API for iOS
  * audioscrobbler: AudioScrobbler/Last.fm submission plugin
  * auhal: Audio output for MacOS X based on the AUHAL API
- * avcodec: libavcodec audio/video decoder
- * avformat: libavformat demuxer
- * avi: AVI file stream demuxer
+ * avcodec: FFmpeg audio/video decoder
+ * avformat: FFmpeg demuxer
+ * avi: AVI File stream demuxer
  * ball: Augmented reality ball video filter module
  * bandlimited_resampler: Bandlimited interpolation audio resampler
  * blend: a picture filter that blends two pictures
@@ -167,8 +167,6 @@ $Id$
  * invert: inverse video filter
  * iomx: IPC/OpenMaxIL for Android
  * jack: jack server audio output
- * kai: OS/2 audio output
- * karaoke: simple karaoke audio filter
  * kate: kate text bitstream decoder
  * libass: Subtitle renderers using libass
  * libbluray: Library to access Blu-Ray drives
@@ -257,15 +255,12 @@ $Id$
  * projectm: visualisation using libprojectM
  * ps: input module for MPEG PS decapsulation
  * psychedelic: Psychedelic video filter
- * pulse: PulseAudio audio output
- * pulselist: PulseAudio audio input services discovery
- * pulsesrc: PulseAudio audio input
+ * pulse: PulseAudio audio output module
  * puzzle: puzzle video filter
  * pva: PVA demuxer
  * pvr: input module to read from a PVR card
  * qt4: interface module using the cross-platform Qt4 library
- * qtcapture: Quicktime Video Capture
- * qtsound: Quicktime Audio Capture
+ * qtcapture: Quicktime Capture
  * quartztext: Text renderer using native Mac OS X API
  * quicktime: Quicktime decoder that uses the QT library
  * rawaud: raw audio input module for vlc
@@ -298,12 +293,10 @@ $Id$
  * smf: Standard MIDI file demuxer
  * spatializer: A spatializer audio filter
  * speex: a speex audio decoder/packetizer using the libspeex library
- * speex_resampler: audio resampler using the libspeexdsp library
  * spudec: RLE DVD subtitles decoder
  * sqlite: manage an SQLite database
  * stats: Stats encoder function
  * stl: EBU STL decoder
- * stream_filter_dash: MPEG DASH playback
  * stream_filter_httplive: HTTP Live streaming for playback
  * stream_filter_rar: Stream filter to read inside Rar files
  * stream_filter_record: record any stream instantly
@@ -326,7 +319,7 @@ $Id$
  * stream_out_smem: stream output module to a memory buffer
  * stream_out_standard: standard stream output module
  * stream_out_switcher: stream output module to display backgrounds
- * stream_out_transcode: audio & video transcoder
+ * stream_out_transcode: audio & video transcoder using FFmpeg
  * subsdec: a codec to output textual subtitles
  * subsdelay: subtitles delay filter
  * subsusf: a demuxer for USF subtitles

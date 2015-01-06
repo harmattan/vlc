@@ -290,11 +290,6 @@ SPrefsPanel::SPrefsPanel( intf_thread_t *_p_intf, QWidget *_parent,
             optionWidgets.append( DirectXControl );
             CONFIG_GENERIC_NO_UI( "directx-audio-device-name", StringList,
                     DirectXLabel, DirectXDevice );
-#elif defined( __OS2__ )
-            audioControl( kai );
-            optionWidgets.append( kaiControl );
-            CONFIG_GENERIC_NO_UI( "kai-audio-device", StringList, kaiLabel,
-                    kaiDevice );
 #else
             if( module_exists( "alsa" ) )
             {
@@ -495,16 +490,16 @@ SPrefsPanel::SPrefsPanel( intf_thread_t *_p_intf, QWidget *_parent,
             addToCachingBox( N_("Higher latency"), CachingHigher );
             #undef addToCachingBox
 
-#define TestCaC( name, factor ) \
+#define TestCaC( name ) \
     b_cache_equal =  b_cache_equal && \
-     ( i_cache * factor == config_GetInt( p_intf, name ) );
+     ( i_cache == config_GetInt( p_intf, name ) )
             /* Select the accurate value of the ComboBox */
             bool b_cache_equal = true;
-            int i_cache = config_GetInt( p_intf, "file-caching" );
+            int i_cache = config_GetInt( p_intf, "file-caching");
 
-            TestCaC( "network-caching", 10/3 );
-            TestCaC( "disc-caching", 1);
-            TestCaC( "live-caching", 1 );
+            TestCaC( "network-caching" );
+            TestCaC( "disc-caching" );
+            TestCaC( "live-caching" );
             if( b_cache_equal == 1 )
                 ui.cachingCombo->setCurrentIndex(
                 ui.cachingCombo->findData( QVariant( i_cache ) ) );
@@ -640,24 +635,14 @@ SPrefsPanel::SPrefsPanel( intf_thread_t *_p_intf, QWidget *_parent,
                             encoding );
             CONFIG_GENERIC( "sub-language", String, ui.subLangLabel,
                             preferredLanguage );
-
+            CONFIG_GENERIC_NO_BOOL( "freetype-font", Font, ui.fontLabel, font );
+            CONFIG_GENERIC( "freetype-color", IntegerList, ui.fontColorLabel,
+                            fontColor );
             CONFIG_GENERIC( "freetype-rel-fontsize", IntegerList,
                             ui.fontSizeLabel, fontSize );
-
-            CONFIG_GENERIC_NO_BOOL( "freetype-font", Font, ui.fontLabel, font );
-            CONFIG_GENERIC_NO_BOOL( "freetype-color", Color, ui.fontColorLabel,
-                            fontColor );
-            CONFIG_GENERIC( "freetype-outline-thickness", IntegerList,
-                            ui.fontEffectLabel, effect );
-            CONFIG_GENERIC_NO_BOOL( "freetype-outline-color", Color, ui.outlineColorLabel,
-                            outlineColor );
-
+            CONFIG_GENERIC( "freetype-effect", IntegerList, ui.fontEffectLabel,
+                            effect );
             CONFIG_GENERIC_NO_BOOL( "sub-margin", Integer, ui.subsPosLabel, subsPosition );
-
-            ui.shadowCheck->setChecked( config_GetInt( p_intf, "freetype-shadow-opacity" ) > 0 );
-            ui.backgroundCheck->setChecked( config_GetInt( p_intf, "freetype-background-opacity" ) > 0 );
-            optionWidgets.append( ui.shadowCheck );
-            optionWidgets.append( ui.backgroundCheck );
 
         END_SPREFS_CAT;
 
@@ -734,8 +719,6 @@ void SPrefsPanel::updateAudioOptions( int number)
                                             ->itemData( number ).toString();
 #ifdef WIN32
     optionWidgets[directxW]->setVisible( ( value == "aout_directx" ) );
-#elif defined( __OS2__ )
-    optionWidgets[kaiW]->setVisible( ( value == "kai" ) );
 #else
     /* optionWidgets[ossW] can be NULL */
     if( optionWidgets[ossW] )
@@ -787,16 +770,15 @@ void SPrefsPanel::apply()
             config_PutPsz( p_intf, "cd-audio", devicepath );
         }
 
-#define CaC( name, factor ) config_PutInt( p_intf, name, i_comboValue * factor )
+#define CaC( name ) config_PutInt( p_intf, name, i_comboValue )
         /* Caching */
         QComboBox *cachingCombo = qobject_cast<QComboBox *>(optionWidgets[cachingCoB]);
         int i_comboValue = cachingCombo->itemData( cachingCombo->currentIndex() ).toInt();
         if( i_comboValue )
         {
-            CaC( "file-caching", 1 );
-            CaC( "network-caching", 10/3 );
-            CaC( "disc-caching", 1 );
-            CaC( "live-caching", 1 );
+            CaC( "network-caching" );
+            CaC( "disc-caching" );
+            CaC( "live-caching" );
         }
         break;
 #undef CaC
@@ -836,25 +818,6 @@ void SPrefsPanel::apply()
 
         config_PutPsz( p_intf, "audio-filter", qtu( qs_filter.join( ":" ) ) );
         break;
-    }
-    case SPrefsSubtitles:
-    {
-        bool b_checked = qobject_cast<QCheckBox *>(optionWidgets[shadowCB])->isChecked();
-        if( b_checked && config_GetInt( p_intf, "freetype-shadow-opacity" ) == 0 ) {
-            config_PutInt( p_intf, "freetype-shadow-opacity", 128 );
-        }
-        else if (!b_checked ) {
-            config_PutInt( p_intf, "freetype-shadow-opacity", 0 );
-        }
-
-        b_checked = qobject_cast<QCheckBox *>(optionWidgets[backgroundCB])->isChecked();
-        if( b_checked && config_GetInt( p_intf, "freetype-background-opacity" ) == 0 ) {
-            config_PutInt( p_intf, "freetype-background-opacity", 128 );
-        }
-        else if (!b_checked ) {
-            config_PutInt( p_intf, "freetype-background-opacity", 0 );
-        }
-
     }
     }
 }
@@ -924,7 +887,7 @@ void SPrefsPanel::assoDialog()
 
     if( S_OK == CoCreateInstance( &clsid_IApplication2,
                 NULL, CLSCTX_INPROC_SERVER,
-                IID_IApplicationAssociationRegistrationUI,
+                &IID_IApplicationAssociationRegistrationUI,
                 (void **)&p_appassoc) )
     {
         if(S_OK == p_appassoc->vt->LaunchAdvancedAssociationUI(p_appassoc, L"VLC" ) )
